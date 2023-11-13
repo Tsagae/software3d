@@ -1,11 +1,11 @@
 package main
 
 import (
-	"GoSDL/pkg/basics"
-	"GoSDL/pkg/entities"
-	"GoSDL/pkg/graphics"
-	"GoSDL/pkg/renderer"
 	"fmt"
+	"github.com/tsagae/software3d/pkg/basics"
+	"github.com/tsagae/software3d/pkg/entities"
+	"github.com/tsagae/software3d/pkg/graphics"
+	"github.com/tsagae/software3d/pkg/renderer"
 	"image"
 	"image/color"
 	"runtime"
@@ -43,6 +43,16 @@ func main() {
 			http.HandleFunc("/debug/pprof/trace", pprof.Trace)
 		}()*/
 	run()
+}
+
+func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img *image.RGBA) {
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(img.Pix))
+
+	gl.BlitFramebuffer(0, 0, int32(w), int32(h), 0, 0, int32(w), int32(h), gl.COLOR_BUFFER_BIT, gl.LINEAR)
+
+	window.SwapBuffers()
+	glfw.PollEvents()
 }
 
 func run() int {
@@ -106,7 +116,8 @@ func run() int {
 		panic("camera not found in scene graph")
 	}
 
-	for !window.ShouldClose() {
+	//for !window.ShouldClose() {
+	for {
 		elapsed = time.Since(startTime)
 		elapsedSum += elapsed
 
@@ -131,7 +142,6 @@ func run() int {
 		// -------------------------
 		// MODIFY OR LOAD IMAGE HERE
 		img = imageBuffer.GetImage()
-
 		/*
 			// RESIZING
 			// Set the expected size that you want:
@@ -145,15 +155,9 @@ func run() int {
 			//draw.NearestNeighbor.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
 		*/
 		// -------------------------
-
-		gl.BindTexture(gl.TEXTURE_2D, texture)
-		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(img.Pix))
-
-		gl.BlitFramebuffer(0, 0, int32(w), int32(h), 0, 0, int32(w), int32(h), gl.COLOR_BUFFER_BIT, gl.LINEAR)
-
-		window.SwapBuffers()
-		glfw.PollEvents()
+		oGLUpdateFrame(window, texture, w, h, img)
 		inputHandler(window, camera)
+
 		imageBuffer.Clear()
 	}
 	return 0
