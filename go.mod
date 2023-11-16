@@ -1,4 +1,4 @@
-module GoSDL
+module github.com/tsagae/software3d
 
 go 1.18
 

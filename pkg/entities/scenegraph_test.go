@@ -1,7 +1,7 @@
 package entities
 
 import (
-	"GoSDL/pkg/basics"
+	"github.com/tsagae/software3d/pkg/basics"
 	"testing"
 )
 

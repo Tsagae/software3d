@@ -1,8 +1,8 @@
 package graphics
 
 import (
-	"GoSDL/pkg/basics"
 	"bufio"
+	"github.com/tsagae/software3d/pkg/basics"
 	"os"
 	"strconv"
 	"strings"

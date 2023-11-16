@@ -1,7 +1,7 @@
 package main
 
 import (
-	"GoSDL/pkg/graphics"
+	"github.com/tsagae/software3d/pkg/graphics"
 	"testing"
 )
 

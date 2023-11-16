@@ -1,8 +1,8 @@
 package entities
 
 import (
-	"GoSDL/pkg/basics"
-	"GoSDL/pkg/graphics"
+	"github.com/tsagae/software3d/pkg/basics"
+	"github.com/tsagae/software3d/pkg/graphics"
 	"image/color"
 )
 

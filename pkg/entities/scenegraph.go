@@ -1,8 +1,8 @@
 package entities
 
 import (
-	"GoSDL/pkg/basics"
 	"errors"
+	"github.com/tsagae/software3d/pkg/basics"
 	"strings"
 )
 

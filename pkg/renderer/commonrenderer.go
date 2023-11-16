@@ -1,9 +1,9 @@
 package renderer
 
 import (
-	"GoSDL/pkg/basics"
-	"GoSDL/pkg/entities"
-	"GoSDL/pkg/graphics"
+	"github.com/tsagae/software3d/pkg/basics"
+	"github.com/tsagae/software3d/pkg/entities"
+	"github.com/tsagae/software3d/pkg/graphics"
 )
 
 type RendererParameters struct {

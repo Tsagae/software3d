@@ -1,7 +1,7 @@
 package graphics
 
 import (
-	"GoSDL/pkg/basics"
+	"github.com/tsagae/software3d/pkg/basics"
 )
 
 type Triangle [3]Vertex
