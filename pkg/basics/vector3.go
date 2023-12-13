@@ -9,18 +9,14 @@ type Vector3 struct {
 	X, Y, Z Scalar
 }
 
-type Vector4 struct {
-	X, Y, Z, W Scalar
-}
+/* Constructors */
 
 // Constructors
 func NewVector3(x Scalar, y Scalar, z Scalar) Vector3 {
 	return Vector3{x, y, z}
 }
 
-func NewVector4(x Scalar, y Scalar, z Scalar, w Scalar) Vector4 {
-	return Vector4{x, y, z, w}
-}
+/*  Constants */
 
 // Range 0-65535 Loses alpha value
 func Vector3FromColor(c color.Color) Vector3 {
@@ -140,10 +136,6 @@ func (v Vector3) Inverse() Vector3 {
 
 func (v *Vector3) Dot(h *Vector3) Scalar {
 	return v.X*h.X + v.Y*h.Y + v.Z*h.Z
-}
-
-func (v *Vector4) Dot(h *Vector4) Scalar {
-	return v.X*h.X + v.Y*h.Y + v.Z*h.Z + v.W*h.W
 }
 
 func (v *Vector3) Cross(h *Vector3) Vector3 {
