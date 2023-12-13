@@ -162,7 +162,7 @@ func (v Vector3) Length() Scalar {
 func (v Vector3) AngleBetween(h Vector3) Scalar {
 	v.ThisNormalize()
 	h.ThisNormalize()
-	return Scalar(math.Atan2(float64(v.Cross(&h).Length()), float64(v.Dot(&h))))
+	return Scalar(math.Atan2(float64(v2.Cross(&h).Length()), float64(v2.Dot(&h))))
 }
 
 // Range 0-255 with 255 alpha
