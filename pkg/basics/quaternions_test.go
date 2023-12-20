@@ -1,41 +1,12 @@
 package basics
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestQuaternionRotation(t *testing.T) {
-	/*
-			Vector v0(15.6, -7.1 , 13);
-		    Quaternion q = Quaternion::axisAngle(
-		        normalize(Vector(2, 7, 9)),
-		        toRad(30)
-			);
-		    Vector v1 = v0;
-		    for (int i = 0; i < 12; ++i) {
-		        v1 = rotate(q, v1);
-		    }
-		    assert(isEqual(v0, v1));
-
-		    Quaternion q1 = Quaternion::identity();
-		    for (int i = 0; i < 12; ++i) {
-		        q1 = q1*q;
-		    }
-		    assert(isEquivalent(q1, Quaternion::identity()));
-	*/
-
-	//Vector v0(15.6, -7.1 , 13);
-	v0 := NewVector3(15.6, -7.1, 13)
+func TestIdentityQuaternion(t *testing.T) {
 	q := NewQuaternionFromAngleAndAxis(30, NewVector3(2, 7, 9).Normalized())
-	v1 := v0
-
-	for i := 0; i < 12; i++ {
-		v1 = q.Rotated(v1)
-	}
-
-	if !(v0.Equals(&v1)) {
-		t.Errorf("Error in rotation cumulation on a vector")
-	}
 
 	q1 := NewIdentityQuaternion()
 	for i := 0; i < 12; i++ {
@@ -43,33 +14,47 @@ func TestQuaternionRotation(t *testing.T) {
 	}
 
 	id := NewIdentityQuaternion()
-	if !(q1.Equals(&id)) {
-		t.Errorf("Error in rotation cumulation on a quaternion")
+	assert.Truef(t, id.Equals(&q1), "Accumulated quaternion to get identity does not equal identity quaternion: %v should be equal to %v", q1, id)
+
+}
+
+func TestQuaternionRotation(t *testing.T) {
+	v0 := NewVector3(15.6, -7.1, 13)
+	v1 := v0
+	q := NewQuaternionFromAngleAndAxis(30, NewVector3(2, 7, 9).Normalized())
+
+	for i := 0; i < 12; i++ {
+		v1 = q.Rotated(v1)
 	}
 
-	/*
-			 Quaternion q = Quaternion::axisAngle(
-		                Versor::up(),
-		                toRad(180)
-		                );
-		    assert(isEqual(q, Quaternion(0, 1, 0, 0)));
+	assert.True(t, v0.Equals(&v1), "Error in rotation accumulation on a vector (should be equal to the starting vector)")
 
-		    Vector v(7, 2, 6);
-		    assert(isEqual(rotate(q, v), Vector(-7, 2, -6)));
-	*/
+	v1 = q.Rotated(v1)
+	assert.False(t, v0.Equals(&v1), "Error in rotation accumulation on a vector (should be different to the starting vector)")
 
 	q = NewQuaternionFromAngleAndAxis(180, Up())
-
-	q2 := NewQuaternionFromScalars(0, 1, 0, 0)
-	if !(q.Equals(&q2)) {
-		t.Errorf("Error in quaternion constructors")
-	}
 
 	v := NewVector3(7, 2, 6)
 	v1 = NewVector3(-7, 2, -6)
 	v = q.Rotated(v)
-	if !(v.Equals(&v1)) {
-		t.Errorf("Error in vector rotations")
-	}
+	assert.Truef(t, v.Equals(&v1), "Error in vector rotation")
 
+	zeroV := ZeroVector()
+	newZero := q.Rotated(zeroV)
+	assert.True(t, zeroV.Equals(&newZero), "Zero vector rotated is not zero")
+}
+
+func TestNewQuaternionFromAngleAndAxis(t *testing.T) {
+	q := NewQuaternionFromAngleAndAxis(180, Up())
+
+	q2 := NewQuaternionFromScalars(0, 1, 0, 0)
+	assert.Truef(t, q.Equals(&q2), "Error in quaternion constructor")
+}
+
+func TestNewQuaternionFromEulerAngles(t *testing.T) {
+	q := NewQuaternionFromEulerAngles(-90, 0, -90)
+	p := NewVector3(1, 1, 1).Normalized()
+	p = q.Rotated(p)
+	expected := NewVector3(-1, 1, -1).Normalized()
+	assert.Truef(t, expected.Equals(&p), "Error in quaternion from euler angles got: %v, expected: %v", p, expected)
 }
