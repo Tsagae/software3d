@@ -74,7 +74,8 @@ func (q *Quaternion) IsZero() bool {
 }
 
 func (q *Quaternion) Equals(p *Quaternion) bool {
-	return q.Re.Equals(p.Re) && q.Im.Equals(&p.Im)
+	pImInverse := p.Im.Inverse()
+	return q.Re.Equals(p.Re) && q.Im.Equals(&p.Im) || q.Re.Equals(-p.Re) && q.Im.Equals(&pImInverse)
 }
 
 /* Mutable operations on this */

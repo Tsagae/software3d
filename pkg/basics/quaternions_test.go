@@ -53,8 +53,8 @@ func TestNewQuaternionFromAngleAndAxis(t *testing.T) {
 
 func TestNewQuaternionFromEulerAngles(t *testing.T) {
 	q := NewQuaternionFromEulerAngles(-90, 0, -90)
-	p := NewVector3(1, 1, 1).Normalized()
+	p := NewVector3(1, 1, 1)
 	p = q.Rotated(p)
-	expected := NewVector3(-1, 1, -1).Normalized()
+	expected := NewVector3(-1, -1, 1)
 	assert.Truef(t, expected.Equals(&p), "Error in quaternion from euler angles got: %v, expected: %v", p, expected)
 }
