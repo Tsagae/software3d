@@ -9,13 +9,14 @@ type Quaternion struct {
 	Im Vector3
 }
 
-// Constructors
-// Raw quaternion, not normalized
+/* Constructors */
+
+// NewRawQuaternion Returns a non normalized quaternion
 func NewRawQuaternion(re Scalar, im Vector3) Quaternion {
 	return Quaternion{re, im}
 }
 
-// Angle in deegrees
+// NewQuaternionFromAngleAndAxis Returns a normalized quaternion. The angle parameter is in degrees. Axis is not normalized
 func NewQuaternionFromAngleAndAxis(angle Scalar, axis Vector3) Quaternion {
 	angleRad := angle * math.Pi / 180
 	re := math.Cos(float64(angleRad / 2))
@@ -25,7 +26,7 @@ func NewQuaternionFromAngleAndAxis(angle Scalar, axis Vector3) Quaternion {
 	return quat
 }
 
-// Angles in degrees
+// NewQuaternionFromEulerAngles Returns a normalized quaternion. The angle parameters are in degrees. Applied in this order: yaw -> pitch -> roll
 func NewQuaternionFromEulerAngles(yaw Scalar, pitch Scalar, roll Scalar) Quaternion {
 	yawQuaternion := NewQuaternionFromAngleAndAxis(yaw, Up())
 	pitchQuaternion := NewQuaternionFromAngleAndAxis(pitch, Right())
@@ -36,15 +37,17 @@ func NewQuaternionFromEulerAngles(yaw Scalar, pitch Scalar, roll Scalar) Quatern
 	return finalQuat
 }
 
+// NewQuaternionFromScalars Returns a non normalized quaternion. x, y, z are the imaginary part and w the real part
 func NewQuaternionFromScalars(x Scalar, y Scalar, z Scalar, w Scalar) Quaternion {
 	return Quaternion{w, NewVector3(x, y, z)}
 }
 
+// NewQuaternionFromMatrix Returns a non normalized quaternion from a 3x3 matrix
 func NewQuaternionFromMatrix(m *Matrix3) Quaternion {
 	x := m[0]
 	y := m[1]
 	z := m[2]
-	qw := Scalar(math.Sqrt(float64((1 + x.X + y.Y + z.Z))) / 2.0)
+	qw := Scalar(math.Sqrt(float64(1+x.X+y.Y+z.Z)) / 2.0)
 	qw4 := qw * 4
 	qx := (y.Z - z.Y) / qw4
 	qy := (z.X - x.Z) / qw4
@@ -64,7 +67,8 @@ func NewBackWardQuaternion() Quaternion {
 	return Quaternion{0, Backward()}
 }
 
-// Equality and zero
+/* Equality and zero */
+
 func (q *Quaternion) IsZero() bool {
 	return q.Re.IsZero() && q.Im.IsZero()
 }
@@ -73,17 +77,18 @@ func (q *Quaternion) Equals(p *Quaternion) bool {
 	return q.Re.Equals(p.Re) && q.Im.Equals(&p.Im)
 }
 
-// Mutable operations on this
+/* Mutable operations on this */
+
 func (q *Quaternion) ThisConjugate() {
 	q.Im.ThisInvert()
 }
 
 func (q *Quaternion) ThisAdd(p *Quaternion) {
-	//Quaternion operator+(const Quaternion& o) const { return Quaternion(im + o.im, re + o.re); }
 	q.Im.ThisAdd(p.Im)
 	q.Re += p.Re
 }
 
+// ThisMul Multiplication of quaternions/Accumulation of rotations. The result is normalized
 func (q *Quaternion) ThisMul(p *Quaternion) {
 	//can be optimized
 	newRe := q.Re*p.Re - q.Im.Dot(&p.Im)
@@ -95,8 +100,8 @@ func (q *Quaternion) ThisMul(p *Quaternion) {
 	q.ThisNormalize() //normalization at the end to avoid error stacking
 }
 
+// ThisMulScalar Multiples both the imaginary part and the real part with the scalar a
 func (q *Quaternion) ThisMulScalar(a Scalar) {
-	// Quaternion operator*(Scalar f) const { return Quaternion(im * f, re * f); }
 	q.Im.ThisMul(a)
 	q.Re *= a
 }
@@ -107,7 +112,8 @@ func (q *Quaternion) ThisNormalize() {
 	q.Re /= Scalar(scaling)
 }
 
-// Operations that do not change this
+/* Operations that do not change this */
+
 func (q Quaternion) Conjugate() Quaternion {
 	q.ThisConjugate()
 	return q
@@ -128,7 +134,7 @@ func (q Quaternion) MulScalar(a Scalar) Quaternion {
 	return q
 }
 
-// Does not modify v
+// Rotated Does not modify v
 func (q Quaternion) Rotated(v Vector3) Vector3 {
 	if v.IsZero() {
 		return v
@@ -143,7 +149,7 @@ func (q Quaternion) Rotated(v Vector3) Vector3 {
 	return q.Im             //I only need the imaginary part
 }
 
-// target is a point
+// LookAt target is a point
 func (orientation *Matrix3) LookAt(direction *Vector3) Quaternion {
 	up := Up()
 
