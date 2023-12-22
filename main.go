@@ -8,6 +8,7 @@ import (
 	"github.com/tsagae/software3d/pkg/renderer"
 	"image"
 	"image/color"
+	"os"
 	"runtime"
 	"time"
 
@@ -242,32 +243,33 @@ func mainLoop(sceneGraph entities.SceneGraph) {
 
 }
 */
+
+func readMeshFromFile(fileName string, meshColor color.RGBA) graphics.Mesh {
+	f, err := os.Open(fileName)
+	if err != nil {
+		panic(err)
+	}
+	mesh, err := graphics.NewMeshFromReader(f, basics.Vector3FromColor(meshColor))
+	if err != nil {
+		panic(err)
+	}
+	err = f.Close()
+	if err != nil {
+		panic(err)
+	}
+	return mesh
+}
+
 func loadMeshes() map[string]graphics.Mesh {
 	meshes := make(map[string]graphics.Mesh)
 
-	cubeMesh1, err := graphics.ReadMeshFromFile("meshes/cube.obj", basics.Vector3FromColor(color.RGBA{180, 25, 25, 255}))
-	if err != nil {
-		panic(err)
-	}
-	meshes["cube"] = cubeMesh1
+	meshes["cube"] = readMeshFromFile("meshes/cube.obj", color.RGBA{R: 180, G: 25, B: 25, A: 255})
 
-	sphereMesh, err := graphics.ReadMeshFromFile("meshes/sphere.obj", basics.Vector3FromColor(color.RGBA{0, 0, 180, 255}))
-	if err != nil {
-		panic(err)
-	}
-	meshes["sphere"] = sphereMesh
+	meshes["sphere"] = readMeshFromFile("meshes/sphere.obj", color.RGBA{B: 180, A: 255})
 
-	planeMesh, err := graphics.ReadMeshFromFile("meshes/plane.obj", basics.Vector3FromColor(color.RGBA{70, 50, 30, 255}))
-	if err != nil {
-		panic(err)
-	}
-	meshes["plane"] = planeMesh
+	meshes["plane"] = readMeshFromFile("meshes/plane.obj", color.RGBA{R: 70, G: 50, B: 30, A: 255})
 
-	torusMesh, err := graphics.ReadMeshFromFile("meshes/torus.obj", basics.Vector3FromColor(color.RGBA{0, 180, 0, 255}))
-	if err != nil {
-		panic(err)
-	}
-	meshes["torus"] = torusMesh
+	meshes["torus"] = readMeshFromFile("meshes/torus.obj", color.RGBA{G: 180, A: 255})
 
 	return meshes
 }

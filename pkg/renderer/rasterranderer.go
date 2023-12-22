@@ -41,7 +41,12 @@ func (r *RasterRender) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphi
 	_ = lightsToRender
 	for _, item := range itemsToRender {
 		mesh := item.modelObject.GetMesh()
-		triangles := mesh.GetTriangles(item.modelObject.GetIgnoreMeshNormals())
+		var triangles []graphics.Triangle
+		if item.modelObject.GetIgnoreMeshNormals() {
+			triangles = mesh.GetTrianglesWithFaceNormals()
+		} else {
+			triangles = mesh.GetTriangles()
+		}
 		ignoreSpecular := item.modelObject.GetIgnoreSpecular()
 		for _, t := range triangles {
 			// Translate triangle in view space
