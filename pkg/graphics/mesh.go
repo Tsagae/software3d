@@ -3,10 +3,16 @@ package graphics
 import (
 	"bufio"
 	"github.com/tsagae/software3d/pkg/basics"
-	"os"
+	"io"
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+type MeshIterator struct {
+	index int
+	mesh  *Mesh
+}
 
 type VertexAttributes struct {
 	position basics.Vector3
@@ -21,7 +27,8 @@ type Mesh struct {
 	connectivity []TriangleConnectivity
 }
 
-// Constructors
+/* Constructors */
+
 func NewMesh(geometry []VertexAttributes, connectivity []TriangleConnectivity) Mesh {
 	return Mesh{geometry, connectivity} //should copy the slices
 }
@@ -30,18 +37,23 @@ func NewEmpyMesh() Mesh {
 	return Mesh{nil, nil}
 }
 
-// if ignoreMeshNormas is true the normals are the ones of the surface of the triangles
-func (m *Mesh) GetTriangles(ignoreMeshNormals bool) []Triangle {
-	if ignoreMeshNormals {
-		return m.getTrianglesWithoutNormals()
-	}
+func (m *Mesh) GetTriangles() []Triangle {
 	return m.getTrianglesWithNormals()
+}
+
+// GetTrianglesWithFaceNormals Returns a slice of triangles but ignores the mesh normals and uses the normals of the faces
+func (m *Mesh) GetTrianglesWithFaceNormals() []Triangle {
+	return m.getTrianglesWithoutNormals()
 }
 
 func (m *Mesh) getTrianglesWithNormals() []Triangle {
 	triangles := make([]Triangle, len(m.connectivity))
 	for i, v := range m.connectivity {
-		triangles[i] = NewTriangleWithNormals([3]basics.Vector3{m.geometry[v[0]].position, m.geometry[v[1]].position, m.geometry[v[2]].position}, [3]basics.Vector3{m.geometry[v[0]].color, m.geometry[v[1]].color, m.geometry[v[2]].color}, [3]basics.Vector3{m.geometry[v[0]].normal, m.geometry[v[1]].normal, m.geometry[v[2]].normal})
+		triangles[i] = NewTriangleWithNormals(
+			[3]basics.Vector3{m.geometry[v[0]].position, m.geometry[v[1]].position, m.geometry[v[2]].position},
+			[3]basics.Vector3{m.geometry[v[0]].color, m.geometry[v[1]].color, m.geometry[v[2]].color},
+			[3]basics.Vector3{m.geometry[v[0]].normal, m.geometry[v[1]].normal, m.geometry[v[2]].normal},
+		)
 	}
 	return triangles
 }
@@ -49,40 +61,88 @@ func (m *Mesh) getTrianglesWithNormals() []Triangle {
 func (m *Mesh) getTrianglesWithoutNormals() []Triangle {
 	triangles := make([]Triangle, len(m.connectivity))
 	for i, v := range m.connectivity {
-		triangleNormal := computeNormalFromVertices(m.geometry[v[0]].position, m.geometry[v[1]].position, m.geometry[v[2]].position)
-		triangles[i] = NewTriangleWithNormals([3]basics.Vector3{m.geometry[v[0]].position, m.geometry[v[1]].position, m.geometry[v[2]].position}, [3]basics.Vector3{m.geometry[v[0]].color, m.geometry[v[1]].color, m.geometry[v[2]].color}, [3]basics.Vector3{triangleNormal, triangleNormal, triangleNormal})
+		triangles[i] = NewTriangle(
+			[3]basics.Vector3{m.geometry[v[0]].position, m.geometry[v[1]].position, m.geometry[v[2]].position},
+			[3]basics.Vector3{m.geometry[v[0]].color, m.geometry[v[1]].color, m.geometry[v[2]].color},
+		)
 	}
 	return triangles
 }
 
-func ReadMeshFromFile(fileName string, color basics.Vector3) (Mesh, error) {
+/* Mesh Iterator */
+
+func (m *Mesh) Iterator() MeshIterator {
+	return MeshIterator{
+		index: 0,
+		mesh:  m,
+	}
+}
+
+// Next Returns the next triangle in the geometry. Undefined behavior when called after HasNext has returned false
+func (m *MeshIterator) Next() Triangle {
+	mesh := m.mesh
+	connectivityItem := mesh.connectivity[m.index]
+	tri := NewTriangleWithNormals(
+		[3]basics.Vector3{mesh.geometry[connectivityItem[0]].position, mesh.geometry[connectivityItem[1]].position, mesh.geometry[connectivityItem[2]].position},
+		[3]basics.Vector3{mesh.geometry[connectivityItem[0]].color, mesh.geometry[connectivityItem[1]].color, mesh.geometry[connectivityItem[2]].color},
+		[3]basics.Vector3{mesh.geometry[connectivityItem[0]].normal, mesh.geometry[connectivityItem[1]].normal, mesh.geometry[connectivityItem[2]].normal},
+	)
+	m.index++
+	return tri
+}
+
+// NextWithFaceNormals Returns the next triangle in the geometry, ignores the mesh normals and uses the normals of the faces. Undefined behavior when called after HasNext has returned false.
+func (m *MeshIterator) NextWithFaceNormals() Triangle {
+	mesh := m.mesh
+	connectivityItem := mesh.connectivity[m.index]
+	tri := NewTriangle(
+		[3]basics.Vector3{mesh.geometry[connectivityItem[0]].position, mesh.geometry[connectivityItem[1]].position, mesh.geometry[connectivityItem[2]].position},
+		[3]basics.Vector3{mesh.geometry[connectivityItem[0]].color, mesh.geometry[connectivityItem[1]].color, mesh.geometry[connectivityItem[2]].color},
+	)
+	m.index++
+	return tri
+}
+
+// HasNext Returns true if the iterator can return at least another triangle
+func (m *MeshIterator) HasNext() bool {
+	return m.index < len(m.mesh.connectivity)
+}
+
+/* Mesh reader */
+
+// NewMeshFromReader reads a mesh in obj format
+func NewMeshFromReader(reader io.Reader, color basics.Vector3) (Mesh, error) {
+	/*TODO: should make it more reliable by throwing the appropriate error when scanning incorrect lines
+	for example:
+	#8 vertices, 12 faces
+	v -1.00000000 -1.00000000 -1.00000000
+	vn -0.57735027 -0.57735027 0.57735027
+	should throw some kind of format error on the second line since he should be reading 7 more vertices and not a normal
+	*/
 	var line string
 	var nVertices, nFaces int
 	mesh := NewEmpyMesh()
 
-	readFile, err := os.Open(fileName)
+	scanner := bufio.NewScanner(reader)
 
-	if err != nil {
-		return mesh, err
-	}
-
-	fileScanner := bufio.NewScanner(readFile)
-
-	// Skip first lines
-	for i := 0; i < 4; i++ {
-		if !fileScanner.Scan() {
-			return mesh, fileScanner.Err()
+	for scanner.Scan() {
+		match, err := regexp.MatchString("\\d.*(vertices).*\\d.*faces", scanner.Text())
+		if err != nil {
+			return mesh, err
+		}
+		if match {
+			break
 		}
 	}
 
 	// Get vertices and faces length
-	line = fileScanner.Text()
+	line = scanner.Text()
 	splittedLine := strings.Split(line, ",")
 
 	verticesString := splittedLine[0][1:]
 	facesString := splittedLine[1][1:]
 
-	nVertices, err = getNumberOfElements(verticesString)
+	nVertices, err := getNumberOfElements(verticesString)
 	if err != nil {
 		return mesh, err
 	}
@@ -99,11 +159,11 @@ func ReadMeshFromFile(fileName string, color basics.Vector3) (Mesh, error) {
 
 	// Get vertices
 	for i := 0; i < nVertices; i++ {
-		if !fileScanner.Scan() {
-			return mesh, fileScanner.Err()
+		if !scanner.Scan() {
+			return mesh, scanner.Err()
 		}
 
-		vertex, err := getVectorFromLine(fileScanner.Text())
+		vertex, err := getVectorFromLine(scanner.Text())
 		if err != nil {
 			return mesh, err
 		}
@@ -113,11 +173,11 @@ func ReadMeshFromFile(fileName string, color basics.Vector3) (Mesh, error) {
 
 	// Get normals
 	for i := 0; i < nVertices; i++ {
-		if !fileScanner.Scan() {
-			return mesh, fileScanner.Err()
+		if !scanner.Scan() {
+			return mesh, scanner.Err()
 		}
 
-		vertex, err := getVectorFromLine(fileScanner.Text())
+		vertex, err := getVectorFromLine(scanner.Text())
 		if err != nil {
 			return mesh, err
 		}
@@ -125,27 +185,34 @@ func ReadMeshFromFile(fileName string, color basics.Vector3) (Mesh, error) {
 		mesh.geometry[i].normal = vertex
 	}
 
-	// Skip 3 lines
-	for i := 0; i < 3; i++ {
-		if !fileScanner.Scan() {
-			return mesh, fileScanner.Err()
+	var currentLine string
+	for scanner.Scan() {
+		currentLine = scanner.Text()
+		match, err := regexp.MatchString("f( (\\d+//\\d+))+", currentLine)
+		if err != nil {
+			return mesh, err
+		}
+		if match {
+			break
 		}
 	}
 
+	connectivity, err := getConnectivityFromLine(currentLine)
+	if err != nil {
+		return mesh, err
+	}
+	mesh.connectivity[0] = connectivity
 	// Get connectivity
-	for i := 0; i < nFaces; i++ {
-		if !fileScanner.Scan() {
-			return mesh, fileScanner.Err()
+	for i := 1; i < nFaces; i++ {
+		if !scanner.Scan() {
+			return mesh, scanner.Err()
 		}
-
-		connectivity, err := getConnectivityFromLine(fileScanner.Text())
+		connectivity, err := getConnectivityFromLine(scanner.Text())
 		if err != nil {
 			return mesh, err
 		}
 		mesh.connectivity[i] = connectivity
 	}
-
-	readFile.Close()
 
 	return mesh, nil
 }
