@@ -6,14 +6,13 @@ import (
 )
 
 type ImageBuffer struct {
-	innerImage   *image.RGBA
-	width        int
-	height       int
-	defaultColor color.Color
+	innerImage *image.RGBA
+	width      int
+	height     int
 }
 
-func NewImageBuffer(width int, height int, defaultColor color.Color) ImageBuffer {
-	return ImageBuffer{image.NewRGBA(image.Rect(0, 0, width, height)), width, height, defaultColor}
+func NewImageBuffer(width int, height int) ImageBuffer {
+	return ImageBuffer{image.NewRGBA(image.Rect(0, 0, width, height)), width, height}
 }
 
 func (iBuf *ImageBuffer) Get(x int, y int) color.Color { // image.Image interface
@@ -33,10 +32,9 @@ func (iBuf *ImageBuffer) GetHeight() int {
 }
 
 func (iBuf *ImageBuffer) Clear() {
-	for y := 0; y < iBuf.height; y++ {
-		for x := 0; x < iBuf.width; x++ {
-			iBuf.Set(x, y, color.Black)
-		}
+	pix := iBuf.innerImage.Pix
+	for i, _ := range pix {
+		pix[i] = 0
 	}
 }
 
