@@ -2,6 +2,7 @@ package entities
 
 import (
 	"errors"
+	"fmt"
 	"github.com/tsagae/software3d/pkg/basics"
 	"strings"
 )
@@ -32,27 +33,26 @@ func NewSceneGraph() SceneGraph {
 	return sceneGraph
 }
 
-// Adds a child provided the name of the parent
-func (sceneGraph *SceneGraph) AddChild(parentName string, childNode *SceneGraphNode, toParentTransform basics.Transform) (*SceneGraphNode, error) {
-	_, ok := sceneGraph.nodes[childNode.nodeName]
-	if ok {
+// AddChild Adds a child provided the name of the parent. Returns an error if a node with the same name already exists or the parent node does not exist
+func (sceneGraph *SceneGraph) AddChild(parentName string, childNode *SceneGraphNode, toParentTransform basics.Transform) error {
+	if _, ok := sceneGraph.nodes[childNode.nodeName]; ok {
 		//node already exists
-		return nil, errors.New("a node with the same name already exists")
+		return errors.New("a node with the same name already exists")
 	}
-	parentNode, ok := sceneGraph.nodes[parentName]
-	if ok {
+
+	if parentNode, ok := sceneGraph.nodes[parentName]; ok {
 		//parent node found
 		childNode.toParentTransform = toParentTransform
 		childNode.parentNode = parentNode
 		parentNode.childNodes = append(parentNode.childNodes, childNode)
 		sceneGraph.nodes[childNode.nodeName] = childNode
 	} else {
-		return nil, errors.New("the parent node does not exist")
+		return errors.New("the parent node does not exist")
 	}
-	return childNode, nil
+	return nil
 }
 
-// Removes a node and all of its children
+// RemoveChild Removes a node and all of its children
 func (sceneGraph *SceneGraph) RemoveChild(nodeName string) {
 	nodeToDelete, ok := sceneGraph.nodes[nodeName]
 	if ok {
@@ -70,20 +70,20 @@ func (sceneGraph *SceneGraph) RemoveChild(nodeName string) {
 	}
 }
 
-// Unordered list of node names
-func (scenegGraph *SceneGraph) ListNodes() []string {
-	keys := make([]string, 0, len(scenegGraph.nodes))
-	for k := range scenegGraph.nodes {
+// ListNodes Unordered list of node names
+func (sceneGraph *SceneGraph) ListNodes() []string {
+	keys := make([]string, 0, len(sceneGraph.nodes))
+	for k := range sceneGraph.nodes {
 		keys = append(keys, k)
 	}
 	return keys
 }
 
-func (sceneGraph *SceneGraph) ToString() string {
+func (sceneGraph *SceneGraph) String() string {
 	return sceneGraph.root.sceneGraphToString()
 }
 
-// Returns a scene graph node from its name, nil if its not found
+// GetNode Returns a scene graph node given its name, nil if it's not found
 func (sceneGraph *SceneGraph) GetNode(nodeName string) *SceneGraphNode {
 	node, ok := sceneGraph.nodes[nodeName]
 	if ok {
@@ -92,7 +92,7 @@ func (sceneGraph *SceneGraph) GetNode(nodeName string) *SceneGraphNode {
 	return nil
 }
 
-// Returns root node of the scene graph
+// GetRoot Returns the root node of the scene graph
 func (sceneGraph *SceneGraph) GetRoot() *SceneGraphNode {
 	return sceneGraph.root
 }
@@ -111,18 +111,18 @@ func NewSceneGraphNode(gameObject GameObject, nodeName string) *SceneGraphNode {
 	}
 }
 
-// Returns the name of the node
-func (node *SceneGraphNode) GetName() string {
+// Name GetName Returns the name of the node
+func (node *SceneGraphNode) Name() string {
 	return node.nodeName
 }
 
-// Returns the parent node
-func (node *SceneGraphNode) GetParent() *SceneGraphNode {
+// Parent Returns the parent node
+func (node *SceneGraphNode) Parent() *SceneGraphNode {
 	return node.parentNode
 }
 
-// Returns a slice containing pointers to all the child nodes
-func (node *SceneGraphNode) GetChildren() []*SceneGraphNode {
+// Children Returns a slice containing pointers to all the child nodes
+func (node *SceneGraphNode) Children() []*SceneGraphNode {
 	src := node.childNodes
 	dst := make([]*SceneGraphNode, len(src))
 	copy(dst, src)
@@ -130,9 +130,9 @@ func (node *SceneGraphNode) GetChildren() []*SceneGraphNode {
 }
 
 func (node *SceneGraphNode) CumulateWorldTransform(t *basics.Transform) {
-	worldT := node.GetWorldTransform()
+	worldT := node.WorldTransform()
 	worldT.ThisCumulate(t)
-	parentWorldT := node.parentNode.GetWorldTransform()
+	parentWorldT := node.parentNode.WorldTransform()
 	parentWorldT.ThisInvert()
 	node.toParentTransform = worldT.Cumulate(&parentWorldT)
 }
@@ -145,7 +145,7 @@ func (node *SceneGraphNode) CumulateLocalTransform(t *basics.Transform) {
 	node.toParentTransform.ThisCumulate(t)
 }
 
-func (node *SceneGraphNode) GetWorldTransform() basics.Transform {
+func (node *SceneGraphNode) WorldTransform() basics.Transform {
 	tempNode := node
 	worldT := basics.NewZeroTransform()
 	for tempNode != nil {
@@ -163,8 +163,8 @@ func (node *SceneGraphNode) SetViewRotation(yaw basics.Scalar, pitch basics.Scal
 	node.toParentTransform.Rotation = newRotation
 }
 
-func (node *SceneGraphNode) GetOrientation() basics.Matrix3 {
-	locToWRot := node.GetWorldTransform().Rotation
+func (node *SceneGraphNode) Orientation() basics.Matrix3 {
+	locToWRot := node.WorldTransform().Rotation
 	matrix3 := basics.NewCanonicalMatrix3()
 	matrix3[0] = locToWRot.Rotated(matrix3[0])
 	matrix3[1] = locToWRot.Rotated(matrix3[1])
@@ -173,18 +173,18 @@ func (node *SceneGraphNode) GetOrientation() basics.Matrix3 {
 }
 
 func (node *SceneGraphNode) rescursiveToString(depth int) string {
-	outStr := ""
-	outStr += strings.Repeat("\t", depth)
-	if node.GameObject.GetName() == "" {
-		outStr += "unnamedGameObj"
+	var sb strings.Builder
+	sb.WriteString(strings.Repeat("\t", depth))
+	if node.GameObject.Name() == "" {
+		sb.WriteString("unnamedGameObj")
 	} else {
-		outStr += node.GameObject.GetName()
+		sb.WriteString(fmt.Sprintf("%v: %v", node.nodeName, node.GameObject.Name()))
 	}
-	outStr += "\n"
+	sb.WriteString("\n")
 	for _, child := range node.childNodes {
-		outStr += child.rescursiveToString(depth + 1)
+		sb.WriteString(child.rescursiveToString(depth + 1))
 	}
-	return outStr
+	return sb.String()
 }
 
 func (node *SceneGraphNode) sceneGraphToString() string {
@@ -201,7 +201,7 @@ func (node *SceneGraphNode) sceneGraphToString() string {
 
 	func (o *InstanceObject) LookAtDirection(direction *basics.Vector3) {
 		direction.ThisNormalize()
-		orientation := o.GetOrientation()
+		orientation := o.Orientation()
 		lookAtRotation := orientation.LookAt(direction)
 		o.LocalRotate(&o.WorldToLocalTransform.Rotation)
 		o.LocalRotate(&lookAtRotation)

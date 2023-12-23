@@ -1,41 +1,26 @@
 package entities
 
 import (
+	"github.com/stretchr/testify/assert"
 	"github.com/tsagae/software3d/pkg/basics"
 	"testing"
 )
 
-func TestTranformations(t *testing.T) {
-
-	/*
-		cubeMesh, err := graphics.ReadMeshFromFile("cube.obj", *basics.White(155))
-		if err != nil {
-			panic(err)
-		}
-	*/
+func TestSceneGraph_String(t *testing.T) {
 
 	cubeObj := NewEmptyObject("cubeObj")
 
 	sceneGraph := NewSceneGraph()
-	sceneGraph.AddChild("world", NewSceneGraphNode(cubeObj, "cube"), basics.NewZeroTransform())
+	err := sceneGraph.AddChild("world", NewSceneGraphNode(cubeObj, "cube"), basics.NewZeroTransform())
+	assert.Nil(t, err, "err should be nil")
 	//nodes := []*entities.SceneGraphNode{cubeNode}
-	cubeNode := sceneGraph.GetNode("cube")
-
-	yRotationTransformation := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(1, basics.Up()), basics.NewVector3(0, 0, 0))
 
 	tr := basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(1, 0, -1))
 
-	sceneGraph.AddChild("cubeNode", NewSceneGraphNode(cubeObj, "secondCube"), tr)
-
-	for i := 0; i < 100; i++ {
-		cubeNode.CumulateLocalTransform(&yRotationTransformation)
+	err = sceneGraph.AddChild("cube", NewSceneGraphNode(cubeObj, "secondCube"), tr)
+	if err != nil {
+		assert.Nil(t, err, "err should be nil")
 	}
 
-	if false {
-		t.Errorf("error")
-	}
-}
-
-func TestLocToWorldTransformTree(t *testing.T) {
-
+	assert.Equal(t, "world: worldObj\n\tcube: cubeObj\n\t\tsecondCube: cubeObj\n", sceneGraph.String())
 }
