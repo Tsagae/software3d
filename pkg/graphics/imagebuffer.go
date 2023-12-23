@@ -9,10 +9,10 @@ type ImageBuffer struct {
 	innerImage   *image.RGBA
 	width        int
 	height       int
-	defaultColor color.Color
+	defaultColor color.RGBA
 }
 
-func NewImageBuffer(width int, height int, defaultColor color.Color) ImageBuffer {
+func NewImageBuffer(width int, height int, defaultColor color.RGBA) ImageBuffer {
 	return ImageBuffer{image.NewRGBA(image.Rect(0, 0, width, height)), width, height, defaultColor}
 }
 
