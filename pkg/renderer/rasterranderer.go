@@ -41,18 +41,20 @@ func (r *RasterRender) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphi
 	_ = lightsToRender
 	for _, item := range itemsToRender {
 		mesh := item.modelObject.GetMesh()
-		var triangles []graphics.Triangle
-		if item.modelObject.GetIgnoreMeshNormals() {
-			triangles = mesh.GetTrianglesWithFaceNormals()
-		} else {
-			triangles = mesh.GetTriangles()
-		}
+		ignoreMeshNormals := item.modelObject.GetIgnoreMeshNormals()
 		ignoreSpecular := item.modelObject.GetIgnoreSpecular()
-		for _, t := range triangles {
+		iterator := mesh.Iterator()
+		for iterator.HasNext() {
 			// Translate triangle in view space
+			var t graphics.Triangle
+			if ignoreMeshNormals {
+				t = iterator.NextWithFaceNormals()
+			} else {
+				t = iterator.Next()
+			}
 			t.ThisApplyTransformation(&item.completeTransform)
 
-			// Tiangles too close to the camera are discarded
+			// Triangles too close to the camera are discarded
 			if getClosestZ(&t) < 0.3 {
 				continue
 			}
@@ -103,7 +105,7 @@ func (r *RasterRender) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphi
 					// find weights for interpolation
 					w0, w1, w2 := findWeights(&t[0].Position, &t[1].Position, &t[2].Position, &target2D)
 					if w0 < 0 || w1 < 0 || w2 < 0 {
-						continue // point lands outside of the triangle
+						continue // point lands outside the triangle
 					}
 					point := interpolate3Vertices(&t[0].Position, &t[1].Position, &t[2].Position, w0, w1, w2)
 					// depth test
