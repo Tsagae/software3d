@@ -46,7 +46,7 @@ func main() {
 	run()
 }
 
-func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img *image.RGBA) {
+func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img image.RGBA) {
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
 	//https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
@@ -140,11 +140,9 @@ func run() int {
 
 		var w, h = window.GetSize()
 
-		var img = image.NewRGBA(image.Rect(0, 0, w, h))
-
 		// -------------------------
 		// MODIFY OR LOAD IMAGE HERE
-		img = imageBuffer.GetImage()
+		img := imageBuffer.GetImage()
 		/*
 			// RESIZING
 			// Set the expected size that you want:
