@@ -54,7 +54,7 @@ func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, wi
 			inverseCameraTransform: inverseCameraT,
 		},
 		zBuffer:     graphics.NewZBuffer(int(winWidth), int(winHeight)),
-		imageBuffer: graphics.NewImageBuffer(int(winWidth), int(winHeight), color.RGBA{}),
+		imageBuffer: graphics.NewImageBuffer(int(winWidth), int(winHeight)),
 	}
 }
 
