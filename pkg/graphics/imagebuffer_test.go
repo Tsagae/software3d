@@ -43,16 +43,17 @@ func BenchmarkImageBuffer_Get(b *testing.B) {
 
 func BenchmarkImageBuffer_Set(b *testing.B) {
 	imageBuffer := NewImageBuffer(800, 600)
+	colorToSet := color.RGBA{
+		R: 255,
+		G: 255,
+		B: 255,
+		A: 255,
+	}
 	fmt.Println("---------------Benchmark start---------------")
 	b.ResetTimer()
 	time := time2.Now()
 	for i := 0; i < b.N; i++ {
-		imageBuffer.Set(0, 0, color.RGBA{
-			R: 255,
-			G: 255,
-			B: 255,
-			A: 255,
-		})
+		imageBuffer.Set(0, 0, colorToSet)
 	}
 	fmt.Printf("setting %v pixels: %v\n", b.N, time2.Now().Sub(time))
 	fmt.Println("----------------Benchmark end----------------")
