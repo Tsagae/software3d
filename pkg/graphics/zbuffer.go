@@ -32,12 +32,10 @@ func (z *ZBuffer) GetHeight() int {
 }
 
 func (z *ZBuffer) Clear() {
-	//maybe reallocate the whole slice?
 	inf := basics.Scalar(math.Inf(+1))
-	lenZbuf := len(z.buffer)
 	zBuf := z.buffer
 
-	for i := 0; i < lenZbuf; i++ {
+	for i := range zBuf {
 		zBuf[i] = inf
 	}
 }
