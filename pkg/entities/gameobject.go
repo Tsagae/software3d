@@ -7,7 +7,7 @@ import (
 )
 
 type GameObject interface {
-	GetName() string
+	Name() string
 }
 
 type EmptyObject struct {
@@ -40,7 +40,7 @@ func NewEmptyObject(name string) *EmptyObject {
 	}
 }
 
-func (e *EmptyObject) GetName() string {
+func (e *EmptyObject) Name() string {
 	return e.name
 }
 
@@ -54,23 +54,23 @@ func NewModelObject(name string, mesh graphics.Mesh, ignoreMeshNormals bool, spe
 	}
 }
 
-func (m *ModelObject) GetName() string {
+func (m *ModelObject) Name() string {
 	return m.name
 }
 
-func (m *ModelObject) GetMesh() graphics.Mesh {
+func (m *ModelObject) Mesh() graphics.Mesh {
 	return m.mesh
 }
 
-func (m *ModelObject) GetIgnoreMeshNormals() bool {
+func (m *ModelObject) IgnoreMeshNormals() bool {
 	return m.ignoreMeshNormals
 }
 
-func (m *ModelObject) GetSpecularExponent() basics.Scalar {
+func (m *ModelObject) SpecularExponent() basics.Scalar {
 	return m.specularExponent
 }
 
-func (m *ModelObject) GetIgnoreSpecular() bool {
+func (m *ModelObject) IgnoreSpecular() bool {
 	return m.ignoreSpecular
 }
 
@@ -80,7 +80,7 @@ func NewCameraObject(name string) *CameraObject {
 	}
 }
 
-func (c *CameraObject) GetName() string {
+func (c *CameraObject) Name() string {
 	return c.name
 }
 
@@ -92,14 +92,14 @@ func NewLightObject(name string, lightColor color.Color, lightFallOff FalloffFun
 	}
 }
 
-func (l *LightObject) GetName() string {
+func (l *LightObject) Name() string {
 	return l.name
 }
 
-func (l *LightObject) GetColor() color.Color {
+func (l *LightObject) Color() color.Color {
 	return l.color
 }
 
-func (l *LightObject) GetFallOff() FalloffFunction {
+func (l *LightObject) FallOff() FalloffFunction {
 	return l.falloff
 }
