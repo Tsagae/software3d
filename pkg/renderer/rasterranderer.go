@@ -13,8 +13,32 @@ type RasterRender struct {
 	imageBuffer graphics.ImageBuffer
 }
 
+type RendererParameters struct {
+	camera                 *entities.SceneGraphNode
+	planeZ                 basics.Scalar
+	winWidth               int
+	winHeight              int
+	planeNormal            basics.Vector3
+	planeZero              basics.Vector3
+	aspectRatio            basics.Scalar
+	hw                     basics.Scalar
+	hh                     basics.Scalar
+	inverseCameraTransform basics.Transform
+}
+
+type renderItem struct {
+	modelObject       *entities.ModelObject
+	completeTransform basics.Transform
+	//distanceFromCamera basics.Scalar //probably unnecessary, could use the z of cameraViewTransform
+}
+
+type renderLight struct {
+	light    *entities.LightObject
+	position basics.Vector3 //position in camera space
+}
+
 func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, winWidth int, winHeight int) *RasterRender {
-	inverseCameraT := camera.GetWorldTransform()
+	inverseCameraT := camera.WorldTransform()
 	inverseCameraT.ThisInvert()
 	return &RasterRender{
 		parameters: RendererParameters{
@@ -35,104 +59,178 @@ func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, wi
 }
 
 func (r *RasterRender) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphics.ImageBuffer {
-	inverseCameraT := sceneGraph.GetNode("camera").GetWorldTransform()
+	inverseCameraT := sceneGraph.GetNode("camera").WorldTransform()
 	inverseCameraT.ThisInvert()
 	itemsToRender, lightsToRender := getAllItemsToRender(sceneGraph, &inverseCameraT)
-	_ = lightsToRender
+
 	for _, item := range itemsToRender {
-		mesh := item.modelObject.GetMesh()
-		ignoreMeshNormals := item.modelObject.GetIgnoreMeshNormals()
-		ignoreSpecular := item.modelObject.GetIgnoreSpecular()
-		iterator := mesh.Iterator()
-		for iterator.HasNext() {
-			// Translate triangle in view space
-			var t graphics.Triangle
-			if ignoreMeshNormals {
-				t = iterator.NextWithFaceNormals()
-			} else {
-				t = iterator.Next()
-			}
-			t.ThisApplyTransformation(&item.completeTransform)
-
-			// Triangles too close to the camera are discarded
-			if getClosestZ(&t) < 0.3 {
-				continue
-			}
-
-			ambientLightColor := basics.Vector3FromColor(color.RGBA{30, 30, 30, 255})
-			forward := basics.Forward()
-			TriangleNormalsPhong(&t, &forward, &ambientLightColor, item.modelObject.GetSpecularExponent(), lightsToRender, color.RGBA64{1, 1, 1, 255}, ignoreSpecular)
-
-			// Translate triangle in clip space:
-			// top left: (-1, +1) | bottom right: (+1, -1) | center: (0, 0)
-			//oneIn := false
-			for i := 0; i < 3; i++ {
-				t[i].Position = projectPointOnViewPlane(&t[i].Position, &r.parameters.planeZero, &r.parameters.planeNormal)
-				/*
-					if (t[i].Position.X > -r.parameters.aspectRatio*2 && t[i].Position.X < r.parameters.aspectRatio*2) && (t[i].Position.Y > -2 && t[i].Position.Y < 2) { // if a vertex is inside the view frustum | edge case with big triangles close to the screen
-						oneIn = true
-					}
-				*/
-			}
-
-			/*
-				if !oneIn {
-					continue
-				}
-			*/
-
-			// Back face culling
-			triangleNormal := t.GetSurfaceNormal()
-			if r.parameters.planeNormal.Dot(&triangleNormal) <= 0 {
-				continue
-			}
-
-			// Correct scaling for the aspect ratio
-			scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
-
-			// Bounding box
-			max, min := getMaxMin(t[0].Position, t[1].Position, t[2].Position)
-			min.X = basics.Clamp(0, basics.Scalar(r.parameters.winWidth), basics.Floor(min.X))
-			min.Y = basics.Clamp(0, basics.Scalar(r.parameters.winHeight), basics.Floor(min.Y))
-
-			max.X = basics.Clamp(0, basics.Scalar(r.parameters.winWidth), basics.Ceil(max.X))
-			max.Y = basics.Clamp(0, basics.Scalar(r.parameters.winHeight), basics.Ceil(max.Y))
-
-			// Test for each pixel in the bounding box from top left to bottom right
-			for y := int(min.Y); y < int(max.Y); y++ {
-				for x := int(min.X); x < int(max.X); x++ {
-					target2D := basics.NewVector3(basics.Scalar(x), basics.Scalar(y), 0)
-					// find weights for interpolation
-					w0, w1, w2 := findWeights(&t[0].Position, &t[1].Position, &t[2].Position, &target2D)
-					if w0 < 0 || w1 < 0 || w2 < 0 {
-						continue // point lands outside the triangle
-					}
-					point := interpolate3Vertices(&t[0].Position, &t[1].Position, &t[2].Position, w0, w1, w2)
-					// depth test
-					if point.Z < 0 || r.zBuffer.Get(x, y) < point.Z { // if the point is behind the camera or the depth buffer has already something closer
-						continue
-					}
-					r.zBuffer.Set(x, y, point.Z)
-
-					// set color
-					color0 := &t[0].Color
-					color1 := &t[1].Color
-					color2 := &t[2].Color
-					colorVector := interpolate3Vertices(color0, color1, color2, w0, w1, w2)
-					// Scaling to uint8 range
-					colorVector.ThisMul(1 / 65535.0)
-					colorVector.ThisMul(255.0)
-					r.imageBuffer.Set(x, y, colorVector.ToColor())
-				}
-			}
-		}
+		r.renderSingleItem(item, lightsToRender)
 	}
 	r.zBuffer.Clear()
 	return &r.imageBuffer
 }
 
+func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
+	mesh := item.modelObject.Mesh()
+	ignoreMeshNormals := item.modelObject.IgnoreMeshNormals()
+	iterator := mesh.Iterator()
+	for iterator.HasNext() {
+		// Translate triangle in view space
+		var t graphics.Triangle
+		if ignoreMeshNormals {
+			t = iterator.NextWithFaceNormals()
+		} else {
+			t = iterator.Next()
+		}
+		t.ThisApplyTransformation(&item.completeTransform)
+		// Triangles too close to the camera are discarded
+		if getClosestZ(&t) < 0.3 {
+			continue
+		}
+
+		lightTriangle(&t, &item, lights)
+
+		projectTriangle(&t, &r.parameters.planeZero, &r.parameters.planeNormal)
+
+		// Back face culling
+		triangleNormal := t.GetSurfaceNormal()
+		if r.parameters.planeNormal.Dot(&triangleNormal) <= 0 {
+			continue
+		}
+
+		// Correct scaling for the aspect ratio
+		scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+
+		rasterTriangle(t, r.parameters.winWidth, r.parameters.winHeight, &r.imageBuffer, &r.zBuffer)
+	}
+}
+
+func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffer *graphics.ImageBuffer, zBuffer *graphics.ZBuffer) {
+	// Bounding box
+	maxX, minX, maxY, minY := getMaxMin(t[0].Position, t[1].Position, t[2].Position)
+
+	minX = basics.Clamp(0, basics.Scalar(winWidth), basics.Floor(minX))
+	minY = basics.Clamp(0, basics.Scalar(winHeight), basics.Floor(minY))
+
+	maxX = basics.Clamp(0, basics.Scalar(winWidth), basics.Ceil(maxX))
+	maxY = basics.Clamp(0, basics.Scalar(winHeight), basics.Ceil(maxY))
+
+	// Test for each pixel in the bounding box from top left to bottom right
+	for y := int(minY); y < int(maxY); y++ {
+		for x := int(minX); x < int(maxX); x++ {
+			target2D := basics.NewVector3(basics.Scalar(x), basics.Scalar(y), 0)
+			// find weights for interpolation
+			w0, w1, w2 := findWeights(&t[0].Position, &t[1].Position, &t[2].Position, &target2D)
+			if w0 < 0 || w1 < 0 || w2 < 0 {
+				continue // point lands outside the triangle
+			}
+			point := interpolate3Vertices(&t[0].Position, &t[1].Position, &t[2].Position, w0, w1, w2)
+			// depth test
+			if point.Z < 0 || zBuffer.Get(x, y) < point.Z { // if the point is behind the camera or the depth buffer has already something closer
+				continue
+			}
+			zBuffer.Set(x, y, point.Z)
+
+			// set color
+			color0 := &t[0].Color
+			color1 := &t[1].Color
+			color2 := &t[2].Color
+			colorVector := interpolate3Vertices(color0, color1, color2, w0, w1, w2)
+			// Scaling to uint8 range
+			colorVector.ThisMul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
+			imageBuffer.Set(x, y, colorVector.ToColor())
+		}
+	}
+}
+
+func projectTriangle(t *graphics.Triangle, planeZero *basics.Vector3, planeNormal *basics.Vector3) {
+	// Translate triangle in clip space:
+	// top left: (-1, +1) | bottom right: (+1, -1) | center: (0, 0)
+	//oneIn := false
+	for i := 0; i < 3; i++ {
+		t[i].Position = projectPointOnViewPlane(&t[i].Position, planeZero, planeNormal)
+		/*
+			if (t[i].Position.X > -r.parameters.aspectRatio*2 && t[i].Position.X < r.parameters.aspectRatio*2) && (t[i].Position.Y > -2 && t[i].Position.Y < 2) { // if a vertex is inside the view frustum | edge case with big triangles close to the screen
+				oneIn = true
+			}
+		*/
+	}
+
+	/*
+		if !oneIn {
+			continue
+		}
+	*/
+}
+
+func lightTriangle(t *graphics.Triangle, item *renderItem, lights []renderLight) {
+	ambientLightColor := basics.Vector3FromColor(color.RGBA{30, 30, 30, 255})
+	forward := basics.Forward()
+	TriangleNormalsPhong(t, &forward, &ambientLightColor, item.modelObject.SpecularExponent(), lights, color.RGBA64{1, 1, 1, 255}, item.modelObject.IgnoreSpecular())
+
+}
+
 func (r *RasterRender) RenderLine(p0 basics.Vector3, p1 basics.Vector3, color color.Color) {
 
+}
+
+func scaleTriangleOnScreen(triangle *graphics.Triangle, hw basics.Scalar, hh basics.Scalar, aspectRatio basics.Scalar) {
+	for i := 0; i < 3; i++ {
+		scalePointOnScreen(&triangle[i].Position.X, &triangle[i].Position.Y, hw, hh, aspectRatio)
+	}
+}
+
+func getAllItemsToRender(sceneGraph *entities.SceneGraph, inverseCameraTransform *basics.Transform) ([]renderItem, []renderLight) {
+	node := sceneGraph.GetRoot()
+	queue := node.Children()
+	nodesToRender := make([]renderItem, 0, len(queue))
+	lightsToRender := make([]renderLight, 0)
+
+	for len(queue) != 0 {
+		node := queue[0]
+		queue = queue[1:]
+		objectWorldT := node.WorldTransform()
+		objectCameraT := objectWorldT.Cumulate(inverseCameraTransform)
+		//objectCameraT.ThisCumulate(&objRotT)
+		// TODO optimize repeated transforms, non renderable entities could be removed here
+
+		switch v := node.GameObject.(type) {
+		case *entities.ModelObject:
+			nodesToRender = append(nodesToRender, renderItem{
+				modelObject:       v,
+				completeTransform: objectCameraT,
+			})
+		case *entities.LightObject:
+			lightsToRender = append(lightsToRender, renderLight{
+				v,
+				objectCameraT.Translation,
+			})
+		}
+
+		queue = append(queue, node.Children()...)
+	}
+	return nodesToRender, lightsToRender
+}
+
+// modifies x and y
+func scalePointOnScreen(x *basics.Scalar, y *basics.Scalar, hw basics.Scalar, hh basics.Scalar, aspectRatio basics.Scalar) {
+	*x += 1 * aspectRatio
+	*y += 1
+	*x *= hw / aspectRatio
+	*y *= hh
+}
+
+func projectPointOnViewPlane(p *basics.Vector3, planeZero *basics.Vector3, planeNormal *basics.Vector3) basics.Vector3 {
+	//camera is assumed to be in (0,0,0) in its local space
+	depth := p.Z
+	d := p.Normalized()
+	dDotN := d.Dot(planeNormal)
+	k := planeZero.Dot(planeNormal) / dDotN // o.planeZero.Dot(&o.planeNormal) can be pre-computed
+	d.ThisMul(k)                            //d is now p projected on the plane
+	d.Z = depth
+	//d.Y *= -1
+	//d.X *= -1
+	return d
 }
 
 func findWeights(v1 *basics.Vector3, v2 *basics.Vector3, v3 *basics.Vector3, target *basics.Vector3) (basics.Scalar, basics.Scalar, basics.Scalar) {
@@ -156,8 +254,17 @@ func interpolate3Vertices(v1 *basics.Vector3, v2 *basics.Vector3, v3 *basics.Vec
 	return point
 }
 
+// Returns maxX, minX, maxY, minY
+func getMaxMin(p0, p1, p2 basics.Vector3) (basics.Scalar, basics.Scalar, basics.Scalar, basics.Scalar) {
+	maxX := max(p0.X, p1.X, p2.X)
+	minX := min(p0.X, p1.X, p2.X)
+	maxY := max(p0.Y, p1.Y, p2.Y)
+	minY := min(p0.Y, p1.Y, p2.Y)
+	return maxX, minX, maxY, minY
+}
+
 // Retuns the top-left and the bottom right vertex
-func getMaxMin(vectors ...basics.Vector3) (basics.Vector3, basics.Vector3) {
+func oldMaxMin(vectors ...basics.Vector3) (basics.Vector3, basics.Vector3) {
 	maxX := vectors[0].X
 	maxY := vectors[0].Y
 	minX := maxX
