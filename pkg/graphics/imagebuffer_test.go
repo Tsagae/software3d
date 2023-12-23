@@ -10,13 +10,13 @@ import (
 
 func TestImageBuffer(t *testing.T) {
 	img := NewImageBuffer(10, 10)
-	img.Set(5, 5, color.RGBA{R: 255, G: 255, B: 255, A: 255})
-	assert.Equal(t, color.RGBA{R: 255, G: 255, B: 255, A: 255}, img.Get(5, 5), "Color is not set")
+	img.Set(2, 1, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	assert.Equal(t, color.RGBA{R: 255, G: 255, B: 255, A: 255}, img.Get(2, 1), "Color is not set")
 
 	img.Set(0, 0, color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	img.Clear()
 	assert.Equal(t, color.RGBA{}, img.Get(0, 0), "Clear does not clear the buffer")
-	assert.Equal(t, color.RGBA{}, img.Get(5, 10), "Clear does not clear the buffer")
+	assert.Equal(t, color.RGBA{}, img.Get(5, 9), "Clear does not clear the buffer")
 }
 
 func BenchmarkImageBuffer_Clear(b *testing.B) {
@@ -64,8 +64,8 @@ func BenchmarkImageBufferFillImage(b *testing.B) {
 	fmt.Println("---------------Benchmark start---------------")
 	b.ResetTimer()
 	time := time2.Now()
-	for y := 0; y <= 600; y++ {
-		for x := 0; x <= 800; x++ {
+	for y := 0; y < 600; y++ {
+		for x := 0; x < 800; x++ {
 			imageBuffer.Set(x, y, color.RGBA{
 				R: 255,
 				G: 255,
