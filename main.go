@@ -167,7 +167,7 @@ func run() int {
 }
 
 func inputHandler(window *glfw.Window, camera *entities.SceneGraphNode) {
-	cameraDir := camera.GetOrientation()
+	cameraDir := camera.Orientation()
 	cameraDir[2].Y = 0
 	cameraDir[2].ThisNormalize()
 	movement := basics.NewZeroTransform()

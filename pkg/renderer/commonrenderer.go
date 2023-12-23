@@ -38,14 +38,14 @@ func scaleTriangleOnScreen(triangle *graphics.Triangle, hw basics.Scalar, hh bas
 
 func getAllItemsToRender(sceneGraph *entities.SceneGraph, inverseCameraTransform *basics.Transform) ([]renderItem, []renderLight) {
 	node := sceneGraph.GetRoot()
-	queue := node.GetChildren()
+	queue := node.Children()
 	nodesToRender := make([]renderItem, 0, len(queue))
 	lightsToRender := make([]renderLight, 0)
 
 	for len(queue) != 0 {
 		node := queue[0]
 		queue = queue[1:]
-		objectWorldT := node.GetWorldTransform()
+		objectWorldT := node.WorldTransform()
 		objectCameraT := objectWorldT.Cumulate(inverseCameraTransform)
 		//objectCameraT.ThisCumulate(&objRotT)
 		// TODO optimize repeated transforms, non renderable entities could be removed here
@@ -63,7 +63,7 @@ func getAllItemsToRender(sceneGraph *entities.SceneGraph, inverseCameraTransform
 			})
 		}
 
-		queue = append(queue, node.GetChildren()...)
+		queue = append(queue, node.Children()...)
 	}
 	return nodesToRender, lightsToRender
 }

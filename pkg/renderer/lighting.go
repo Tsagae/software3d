@@ -17,14 +17,14 @@ func TriangleNormalsPhong(t *graphics.Triangle, viewDirection *basics.Vector3, a
 			lightVector := light.position.Sub(&vertex.Position)
 			lightDistance := lightVector.Length()
 			lightVector.ThisNormalize()
-			lightFallOff := light.light.GetFallOff()(lightDistance)
-			lightColor := basics.Vector3FromColor(light.light.GetColor())
+			lightFallOff := light.light.FallOff()(lightDistance)
+			lightColor := basics.Vector3FromColor(light.light.Color())
 			lightColor.ThisMul(lightFallOff)
 			vertex.Color.ThisAdd(diffuseTerm(&vertex.Normal, &lightVector, &baseColor, &lightColor))
 			finalSpecularColor := specularColorAsVector.Mul(lightFallOff)
 			_ = finalSpecularColor
 
-			testLightColor := light.light.GetColor()
+			testLightColor := light.light.Color()
 			testLightColorVector := basics.Vector3FromColor(testLightColor)
 			if !ignoreSpecular {
 				specularTerm := specularTerm(viewDirection, &vertex.Normal, &lightVector, specularExponent, &testLightColorVector, &testLightColorVector)
