@@ -45,11 +45,11 @@ func (iBuf *ImageBuffer) Set(x int, y int, c color.RGBA) {
 	}
 }
 
-func (iBuf *ImageBuffer) GetWidth() int {
+func (iBuf *ImageBuffer) Width() int {
 	return iBuf.width
 }
 
-func (iBuf *ImageBuffer) GetHeight() int {
+func (iBuf *ImageBuffer) Height() int {
 	return iBuf.height
 }
 
