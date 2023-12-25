@@ -6,7 +6,6 @@ import (
 	"github.com/tsagae/software3d/pkg/entities"
 	"github.com/tsagae/software3d/pkg/graphics"
 	"github.com/tsagae/software3d/pkg/renderer"
-	"image"
 	"image/color"
 	"os"
 	"runtime"
@@ -46,11 +45,11 @@ func main() {
 	run()
 }
 
-func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img image.RGBA) {
+func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img []graphics.RGB) {
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
 	//https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(img.Pix))
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB, int32(w), int32(h), 0, gl.RGB, gl.UNSIGNED_BYTE, gl.Ptr(img))
 
 	gl.BlitFramebuffer(0, 0, int32(w), int32(h), 0, 0, int32(w), int32(h), gl.COLOR_BUFFER_BIT, gl.LINEAR)
 
