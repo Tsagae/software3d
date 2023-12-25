@@ -35,7 +35,7 @@ func (iBuf *ImageBuffer) Get(x int, y int) color.RGBA {
 	}
 }
 
-// Set sets the color of the buffer at x, y with the value c
+// Set sets the color of the buffer at x, y with the value c. There is no check for out of bounds values for efficiency reasons
 func (iBuf *ImageBuffer) Set(x int, y int, c color.RGBA) {
 	//iBuf.innerImage[iBuf.width*y+x] = *(*RGB)(unsafe.Pointer(&c)) // it looks like this is not more efficient
 	iBuf.innerImage[iBuf.width*y+x] = RGB{
