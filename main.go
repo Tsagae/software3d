@@ -264,7 +264,7 @@ func loadMeshes() map[string]graphics.Mesh {
 
 	meshes["sphere"] = readMeshFromFile("meshes/sphere.obj", color.RGBA{B: 180, A: 255})
 
-	meshes["plane"] = readMeshFromFile("meshes/plane.obj", color.RGBA{R: 70, G: 50, B: 30, A: 255})
+	meshes["plane"] = readMeshFromFile("meshes/lowpolyplane.obj", color.RGBA{R: 70, G: 50, B: 30, A: 255})
 
 	meshes["torus"] = readMeshFromFile("meshes/torus.obj", color.RGBA{G: 180, A: 255})
 
