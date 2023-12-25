@@ -15,8 +15,8 @@ func TestImageBuffer(t *testing.T) {
 
 	img.Set(0, 0, color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	img.Clear()
-	assert.Equal(t, color.RGBA{}, img.Get(0, 0), "Clear does not clear the buffer")
-	assert.Equal(t, color.RGBA{}, img.Get(5, 9), "Clear does not clear the buffer")
+	assert.Equal(t, color.RGBA{A: 255}, img.Get(0, 0), "Clear does not clear the buffer")
+	assert.Equal(t, color.RGBA{A: 255}, img.Get(5, 9), "Clear does not clear the buffer")
 }
 
 func BenchmarkImageBuffer_Clear(b *testing.B) {
