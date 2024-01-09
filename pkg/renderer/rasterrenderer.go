@@ -220,16 +220,12 @@ func scalePointOnScreen(x *basics.Scalar, y *basics.Scalar, hw basics.Scalar, hh
 	*y *= hh
 }
 
-func projectPointOnViewPlane(p *basics.Vector3, planeZero *basics.Vector3, planeNormal *basics.Vector3) basics.Vector3 {
+func projectPointOnViewPlane(p *basics.Vector3) basics.Vector3 {
 	//camera is assumed to be in (0,0,0) in its local space
-	depth := p.Z
-	d := p.Normalized()
-	dDotN := d.Dot(planeNormal)
-	k := planeZero.Dot(planeNormal) / dDotN // o.planeZero.Dot(&o.planeNormal) can be pre-computed
-	d.ThisMul(k)                            //d is now p projected on the plane
-	d.Z = depth
-	//d.Y *= -1
-	//d.X *= -1
+	//center of the view plane is assumed to be at (x: 0, y: 0, z: 1)
+	d := *p
+	d.X /= d.Z
+	d.Y /= d.Z
 	return d
 }
 
