@@ -268,6 +268,8 @@ func loadMeshes() map[string]graphics.Mesh {
 
 	meshes["torus"] = readMeshFromFile("meshes/torus.obj", color.RGBA{G: 180, A: 255})
 
+	meshes["quad"] = readMeshFromFile("meshes/quad.obj", color.RGBA{R: 200, G: 200, B: 30, A: 255})
+
 	return meshes
 }
 
@@ -284,6 +286,9 @@ func setup() entities.SceneGraph {
 	sceneGraph.AddChild("world", entities.NewSceneGraphNode(cameraObj, "camera"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(1.5, 1, -3)))
 	cameraNode := sceneGraph.GetNode("camera")
 	cameraNode.CumulateBeforeLocalTranform(&rotateCameraT)
+
+	quadObj := entities.NewModelObject("quad", meshes["quad"], true, specularExp, true)
+	sceneGraph.AddChild("world", entities.NewSceneGraphNode(quadObj, "quad"), basics.NewTransform(5, basics.NewQuaternionFromEulerAngles(0, 90, 0), basics.NewVector3(0, 0, 0)))
 
 	planeObj := entities.NewModelObject("planeObj", meshes["plane"], true, specularExp, true)
 

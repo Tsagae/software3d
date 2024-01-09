@@ -83,13 +83,18 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 			t = iterator.Next()
 		}
 		t.ThisApplyTransformation(&item.completeTransform)
-		// Triangles too close to the camera are discarded
-		if getClosestZ(&t) < 0.3 {
-			continue
-		}
 
 		lightTriangle(&t, &item, lights)
 
+		if t[0].Position.Z <= 0 {
+			continue
+		}
+		if t[1].Position.Z <= 0 {
+			continue
+		}
+		if t[2].Position.Z <= 0 {
+			continue
+		}
 		projectTriangle(&t, &r.parameters.planeZero, &r.parameters.planeNormal)
 
 		// Back face culling
@@ -114,6 +119,8 @@ func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffe
 
 	maxX = basics.Clamp(0, basics.Scalar(winWidth), basics.Ceil(maxX))
 	maxY = basics.Clamp(0, basics.Scalar(winHeight), basics.Ceil(maxY))
+
+	//fmt.Printf("minX: %v minY: %v maxX: %v maxY: %v\n", minX, minY, maxX, maxY)
 
 	// Test for each pixel in the bounding box from top left to bottom right
 	for y := int(minY); y < int(maxY); y++ {
@@ -148,12 +155,14 @@ func projectTriangle(t *graphics.Triangle, planeZero *basics.Vector3, planeNorma
 	// top left: (-1, +1) | bottom right: (+1, -1) | center: (0, 0)
 	//oneIn := false
 	for i := 0; i < 3; i++ {
-		t[i].Position = projectPointOnViewPlane(&t[i].Position, planeZero, planeNormal)
+		t[i].Position = projectPointOnViewPlane(&t[i].Position)
 		/*
 			if (t[i].Position.X > -r.parameters.aspectRatio*2 && t[i].Position.X < r.parameters.aspectRatio*2) && (t[i].Position.Y > -2 && t[i].Position.Y < 2) { // if a vertex is inside the view frustum | edge case with big triangles close to the screen
 				oneIn = true
 			}
 		*/
+		//fmt.Printf("projected triangle: {x:%v y:%v z:%v}\n", t[i].Position.X, t[i].Position.Y, t[i].Position.Z)
+
 	}
 
 	/*
@@ -177,6 +186,7 @@ func (r *RasterRender) RenderLine(p0 basics.Vector3, p1 basics.Vector3, color co
 func scaleTriangleOnScreen(triangle *graphics.Triangle, hw basics.Scalar, hh basics.Scalar, aspectRatio basics.Scalar) {
 	for i := 0; i < 3; i++ {
 		scalePointOnScreen(&triangle[i].Position.X, &triangle[i].Position.Y, hw, hh, aspectRatio)
+		//fmt.Printf("scaled triangle: {x:%v y:%v z:%v}\n", triangle[i].Position.X, triangle[i].Position.Y, triangle[i].Position.Z)
 	}
 }
 
