@@ -57,8 +57,8 @@ func projectPointOnViewPlane(p *basics.Vector3) basics.Vector3 {
 func findWeights(v1, v2, v3, target *basics.Vector3) (basics.Scalar, basics.Scalar, basics.Scalar) {
 	// most of this can be cached when finding weights inside the same triangle TODO
 	den := (v2.Y-v3.Y)*(v1.X-v3.X) + (v3.X-v2.X)*(v1.Y-v3.Y)
-	t1 := (target.X - v3.X)
-	t2 := (target.Y - v3.Y)
+	t1 := target.X - v3.X
+	t2 := target.Y - v3.Y
 
 	w1 := ((v2.Y-v3.Y)*t1 + (v3.X-v2.X)*t2) / den
 	w2 := ((v3.Y-v1.Y)*t1 + (v1.X-v3.X)*t2) / den
@@ -117,9 +117,9 @@ func getAllItemsToRender(sceneGraph *entities.SceneGraph, inverseCameraTransform
 }
 
 func lightTriangle(t *graphics.Triangle, item *renderItem, lights []renderLight) {
-	ambientLightColor := basics.Vector3FromColor(color.RGBA{30, 30, 30, 255})
+	ambientLightColor := basics.Vector3FromColor(color.RGBA{R: 30, G: 30, B: 30, A: 255})
 	forward := basics.Forward()
-	TriangleNormalsPhong(t, &forward, &ambientLightColor, item.modelObject.SpecularExponent(), lights, color.RGBA64{1, 1, 1, 255}, item.modelObject.IgnoreSpecular())
+	TriangleNormalsPhong(t, &forward, &ambientLightColor, item.modelObject.SpecularExponent(), lights, color.RGBA64{R: 1, G: 1, B: 1, A: 255}, item.modelObject.IgnoreSpecular())
 }
 
 func projectTriangle(t *graphics.Triangle) {
@@ -144,55 +144,37 @@ func drawLine(v0, v1 *basics.Vector3, iBuf *graphics.ImageBuffer, zBuf *graphics
 		if v0.X > v1.X {
 			v0, v1 = v1, v0
 		}
-
-		y0 := v0.Y
-		x0 := v0.X
-		x1 := v1.X
-
 		if dx == 0 {
 			return
 		}
-
-		a := dy / dx
-
-		y := y0
-		for x := x0; x <= x1; x++ {
-			if x < 0 || y < 0 || int(x) >= iBuf.Width() || int(y) >= iBuf.Height() {
-				continue
-			}
-			iBuf.Set(int(x), int(y), color.RGBA{
-				R: 255,
-				G: 255,
-				B: 255,
-			})
-			y += a
-		}
+		genericDrawLine(v0.X, v1.X, v0.Y, dy/dx, basics.Scalar(iBuf.Width()), basics.Scalar(iBuf.Height()), func(a int, b int, c color.RGBA) {
+			iBuf.Set(a, b, c)
+		})
 	} else {
 		if v0.Y > v1.Y {
 			v0, v1 = v1, v0
 		}
-
-		y0 := v0.Y
-		x0 := v0.X
-
 		if dy == 0 {
 			return
 		}
-
-		a := dx / dy
-
-		x := x0
-		for y := y0; y <= y1; y++ {
-			if x < 0 || y < 0 || int(x) >= iBuf.Width() || int(y) >= iBuf.Height() {
-				continue
-			}
-			iBuf.Set(int(x), int(y), color.RGBA{
-				R: 255,
-				G: 255,
-				B: 255,
-			})
-			x += a
-		}
+		genericDrawLine(v0.Y, v1.Y, v0.X, dx/dy, basics.Scalar(iBuf.Height()), basics.Scalar(iBuf.Width()), func(a int, b int, c color.RGBA) {
+			iBuf.Set(b, a, c)
+		})
 	}
+}
 
+// a0, a1: start and end points on the same axis
+// b0: start on the other axis
+// m: slope
+// aMaxCanvas, bMaxCanvas first value outside of canvas for the two axis
+// requires a0 <= a1
+func genericDrawLine(a0, a1, b0, m, aMaxCanvas, bMaxCanvas basics.Scalar, setImage func(int, int, color.RGBA)) {
+	b := b0
+	for a := a0; a <= a1; a++ {
+		if a < 0 || b < 0 || a >= aMaxCanvas || b >= bMaxCanvas {
+			continue
+		}
+		setImage(int(a), int(b), color.RGBA{R: 255, G: 255, B: 255})
+		b += m
+	}
 }

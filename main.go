@@ -198,8 +198,7 @@ func run() int {
 		panic("camera not found in scene graph")
 	}
 
-	//for !window.ShouldClose() {
-	for {
+	for !window.ShouldClose() {
 		elapsed = time.Since(startTime)
 		elapsedSum += elapsed
 
