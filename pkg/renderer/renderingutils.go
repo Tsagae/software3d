@@ -132,31 +132,67 @@ func projectTriangle(t *graphics.Triangle) {
 
 // Renders a line in clip space
 func drawLine(v0, v1 *basics.Vector3, iBuf *graphics.ImageBuffer, zBuf *graphics.ZBuffer) {
-	if v0.X > v1.X {
-		v0, v1 = v1, v0
-	}
-
 	y0 := v0.Y
 	y1 := v1.Y
 	x0 := v0.X
 	x1 := v1.X
 
-	if x1-x0 == 0 {
-		return
-	}
+	dx := x1 - x0
+	dy := y1 - y0
 
-	a := (y1 - y0) / (x1 - x0)
-
-	y := y0
-	for x := x0; x <= x1; x++ {
-		if x < 0 || y < 0 || int(x) >= iBuf.Width() || int(y) >= iBuf.Height() {
-			continue
+	if basics.Abs(dx) > basics.Abs(dy) {
+		if v0.X > v1.X {
+			v0, v1 = v1, v0
 		}
-		iBuf.Set(int(x), int(y), color.RGBA{
-			R: 255,
-			G: 255,
-			B: 255,
-		})
-		y += a
+
+		y0 := v0.Y
+		x0 := v0.X
+		x1 := v1.X
+
+		if dx == 0 {
+			return
+		}
+
+		a := dy / dx
+
+		y := y0
+		for x := x0; x <= x1; x++ {
+			if x < 0 || y < 0 || int(x) >= iBuf.Width() || int(y) >= iBuf.Height() {
+				continue
+			}
+			iBuf.Set(int(x), int(y), color.RGBA{
+				R: 255,
+				G: 255,
+				B: 255,
+			})
+			y += a
+		}
+	} else {
+		if v0.Y > v1.Y {
+			v0, v1 = v1, v0
+		}
+
+		y0 := v0.Y
+		x0 := v0.X
+
+		if dy == 0 {
+			return
+		}
+
+		a := dx / dy
+
+		x := x0
+		for y := y0; y <= y1; y++ {
+			if x < 0 || y < 0 || int(x) >= iBuf.Width() || int(y) >= iBuf.Height() {
+				continue
+			}
+			iBuf.Set(int(x), int(y), color.RGBA{
+				R: 255,
+				G: 255,
+				B: 255,
+			})
+			x += a
+		}
 	}
+
 }
