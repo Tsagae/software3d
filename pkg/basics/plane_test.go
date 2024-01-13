@@ -1,7 +1,9 @@
 package basics
 
-import "github.com/stretchr/testify/assert"
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 func TestTestPoint(t *testing.T) {
 	planeOrigin := NewVector3(0, 0, 0)
@@ -16,4 +18,19 @@ func TestTestPoint(t *testing.T) {
 
 	pointOnPlane := NewVector3(5, 6, 0)
 	assert.Equal(t, byte(2), plane.TestPoint(&pointOnPlane))
+}
+
+func TestGetCoplanarVectors(t *testing.T) {
+	planeOrigin := NewVector3(0, 0, 0)
+	planeNormal := NewVector3(0, 0, 1)
+	plane := NewPlaneFromPointNormal(&planeOrigin, &planeNormal)
+
+	v1, v2 := plane.CoplanarVectors()
+	pNormal := plane.Normal()
+	assert.Truef(t, v1.Dot(&pNormal).IsZero(), "Dot between %v and %v has to be zero for them to be coplanar", v1, pNormal)
+	assert.True(t, v1.Length().Equals(1))
+
+	assert.Truef(t, v2.Dot(&pNormal).IsZero(), "Dot between %v and %v has to be zero for them to be coplanar", v2, pNormal)
+	assert.True(t, v2.Length().Equals(1))
+
 }
