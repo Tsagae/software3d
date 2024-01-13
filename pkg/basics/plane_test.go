@@ -7,7 +7,7 @@ import (
 
 func TestTestPoint(t *testing.T) {
 	planeOrigin := NewVector3(0, 0, 0)
-	planeNormal := NewVector3(0, 0, 1)
+	planeNormal := NewVector3(0, 0, 3)
 	plane := NewPlaneFromPointNormal(&planeOrigin, &planeNormal)
 
 	pointInFront := NewVector3(5, 6, 3)
@@ -18,6 +18,9 @@ func TestTestPoint(t *testing.T) {
 
 	pointOnPlane := NewVector3(5, 6, 0)
 	assert.Equal(t, byte(2), plane.TestPoint(&pointOnPlane))
+
+	pNormal := plane.Normal()
+	assert.True(t, pNormal.Length().Equals(1))
 }
 
 func TestGetCoplanarVectors(t *testing.T) {
