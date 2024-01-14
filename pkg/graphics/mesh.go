@@ -22,6 +22,7 @@ type VertexAttributes struct {
 
 type TriangleConnectivity [3]int
 
+// The mesh winding order is assumed to be counterclockwise
 type Mesh struct {
 	geometry     []VertexAttributes
 	connectivity []TriangleConnectivity
