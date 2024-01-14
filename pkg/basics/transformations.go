@@ -13,7 +13,7 @@ func NewTransform(scaling Scalar, rotation Quaternion, translation Vector3) Tran
 }
 
 func NewZeroTransform() Transform {
-	return Transform{Scaling: 1, Rotation: NewIdentityQuaternion(), Translation: ZeroVector()}
+	return Transform{Scaling: 1, Rotation: NewIdentityQuaternion(), Translation: Vector3{}}
 }
 
 /*

@@ -17,10 +17,6 @@ func NewVector3(x Scalar, y Scalar, z Scalar) Vector3 {
 
 /*  Constants */
 
-func ZeroVector() Vector3 {
-	return Vector3{0, 0, 0}
-}
-
 func Right() Vector3 {
 	return Vector3{1, 0, 0}
 }

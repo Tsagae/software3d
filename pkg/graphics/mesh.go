@@ -240,7 +240,7 @@ func getConnectivityFromLine(line string) (TriangleConnectivity, error) {
 func getVectorFromLine(line string) (basics.Vector3, error) {
 	//v -1.00000000 -1.00000000 -1.00000000
 	splittedLine := strings.Split(line, " ")[1:]
-	vector := basics.ZeroVector()
+	vector := basics.Vector3{}
 	var coords [3]basics.Scalar
 
 	for i := 0; i < 3; i++ {

@@ -39,7 +39,7 @@ func TestQuaternionRotation(t *testing.T) {
 	v = q.Rotated(v)
 	assert.Truef(t, v.Equals(&v1), "Error in vector rotation")
 
-	zeroV := ZeroVector()
+	zeroV := Vector3{}
 	newZero := q.Rotated(zeroV)
 	assert.True(t, zeroV.Equals(&newZero), "Zero vector rotated is not zero")
 }

@@ -25,7 +25,7 @@ func SampleScene() *entities.SceneGraph {
 	// Scene setup
 	sceneGraph := entities.NewSceneGraph()
 	cameraObj := entities.NewCameraObject("mainCamera")
-	rotateCameraT := basics.NewTransform(1, basics.NewQuaternionFromEulerAngles(0, 20, 0), basics.ZeroVector())
+	rotateCameraT := basics.NewTransform(1, basics.NewQuaternionFromEulerAngles(0, 20, 0), basics.Vector3{})
 	err = sceneGraph.AddChild("world", entities.NewSceneGraphNode(cameraObj, "camera"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(0, 1, -3)))
 	if err != nil {
 		panic(err)

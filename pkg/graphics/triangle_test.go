@@ -42,7 +42,7 @@ func TestTriangle_ThisApplyTransformation(t *testing.T) {
 		},
 	)
 
-	transformation := basics.NewTransform(1, basics.NewQuaternionFromEulerAngles(180, 0, 0), basics.ZeroVector())
+	transformation := basics.NewTransform(1, basics.NewQuaternionFromEulerAngles(180, 0, 0), basics.Vector3{})
 	triangle.ThisApplyTransformation(&transformation)
 
 	expected0 := basics.NewVector3(-1, 1, 0)

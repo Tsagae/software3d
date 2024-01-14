@@ -291,7 +291,7 @@ func inputHandler(window *glfw.Window, camera *entities.SceneGraphNode) {
 
 func mainLoop(sceneGraph entities.SceneGraph) {
 	yRotationTransformation := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(0.3, basics.Up()), basics.NewVector3(0, 0, 0))
-	xRot := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(1, basics.Right()), basics.ZeroVector())
+	xRot := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(1, basics.Right()), basics.Vector3{})
 	torusNode := sceneGraph.GetNode("torus")
 	torusNode.CumulateBeforeLocalTranform(&yRotationTransformation)
 	torusNode.CumulateBeforeLocalTranform(&xRot)
@@ -304,17 +304,17 @@ func mainLoop(sceneGraph entities.SceneGraph) {
 		cube2Node.CumulateLocalTransform(&yRotationTransformation)
 	*/
 	//camera := sceneGraph.GetNode("camera")
-	//inverseRot := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(1, basics.Up()), basics.ZeroVector())
+	//inverseRot := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(1, basics.Up()), basics.Vector3{})
 	//camera.CumulateBeforeLocalTranform(&inverseRot)
 }
 
 /*
 	func renderRGBAxis(scale basics.Scalar, renderer *app.TriRenderer, unitLine bool) {
-		renderer.RenderLine(basics.ZeroVector(), basics.Right().Mul(scale), basics.Red(255))
-		renderer.RenderLine(basics.ZeroVector(), basics.Up().Mul(scale), basics.Green(255))
-		renderer.RenderLine(basics.ZeroVector(), basics.Forward().Mul(scale), basics.Blue(255))
+		renderer.RenderLine(basics.Vector3{}, basics.Right().Mul(scale), basics.Red(255))
+		renderer.RenderLine(basics.Vector3{}, basics.Up().Mul(scale), basics.Green(255))
+		renderer.RenderLine(basics.Vector3{}, basics.Forward().Mul(scale), basics.Blue(255))
 		if unitLine {
-			renderer.RenderLine(basics.ZeroVector(), basics.NewVector3(1, 1, 1).Mul(scale), basics.NewColor(255, 255, 0, 255))
+			renderer.RenderLine(basics.Vector3{}, basics.NewVector3(1, 1, 1).Mul(scale), basics.NewColor(255, 255, 0, 255))
 		}
 
 }
@@ -361,7 +361,7 @@ func setup() entities.SceneGraph {
 	cameraObj := entities.NewCameraObject(
 		"mainCamera",
 	)
-	rotateCameraT := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(-20, basics.Up()), basics.ZeroVector())
+	rotateCameraT := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(-20, basics.Up()), basics.Vector3{})
 	sceneGraph.AddChild("world", entities.NewSceneGraphNode(cameraObj, "camera"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(1.5, 1, -3)))
 	cameraNode := sceneGraph.GetNode("camera")
 	cameraNode.CumulateBeforeLocalTranform(&rotateCameraT)
@@ -387,7 +387,7 @@ func setup() entities.SceneGraph {
 	yRotationTransformation := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(20, basics.Right()), basics.NewVector3(0, 0, 0))
 	torusNode := sceneGraph.GetNode("torus")
 	torusNode.CumulateBeforeLocalTranform(&yRotationTransformation)
-	xRot := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(20, basics.Up()), basics.ZeroVector())
+	xRot := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(20, basics.Up()), basics.Vector3{})
 	torusNode.CumulateBeforeLocalTranform(&xRot)
 
 	// Lighting
@@ -425,7 +425,7 @@ func setupOnlyCube() entities.SceneGraph {
 	cameraObj := entities.NewCameraObject(
 		"mainCamera",
 	)
-	rotateCameraT := basics.NewTransform(1, basics.NewQuaternionFromEulerAngles(-20, -30, 0), basics.ZeroVector())
+	rotateCameraT := basics.NewTransform(1, basics.NewQuaternionFromEulerAngles(-20, -30, 0), basics.Vector3{})
 	sceneGraph.AddChild("world", entities.NewSceneGraphNode(cameraObj, "camera"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(-1.5, 3, -3)))
 	cameraNode := sceneGraph.GetNode("camera")
 	cameraNode.CumulateWorldTransform(&rotateCameraT)
