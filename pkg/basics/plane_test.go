@@ -19,7 +19,7 @@ func TestTestPoint(t *testing.T) {
 	pointOnPlane := NewVector3(5, 6, 0)
 	assert.Equal(t, byte(2), plane.TestPoint(&pointOnPlane))
 
-	pNormal := plane.Normal()
+	pNormal := plane.Normal
 	assert.True(t, pNormal.Length().Equals(1))
 }
 
@@ -29,7 +29,7 @@ func TestGetCoplanarVectors(t *testing.T) {
 	plane := NewPlaneFromPointNormal(&planeOrigin, &planeNormal)
 
 	v1, v2 := plane.CoplanarVectors()
-	pNormal := plane.Normal()
+	pNormal := plane.Normal
 	assert.Truef(t, v1.Dot(&pNormal).IsZero(), "Dot between %v and %v has to be zero for them to be coplanar", v1, pNormal)
 	assert.True(t, v1.Length().Equals(1))
 
