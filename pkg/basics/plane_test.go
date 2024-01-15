@@ -37,3 +37,11 @@ func TestGetCoplanarVectors(t *testing.T) {
 	assert.True(t, v2.Length().Equals(1))
 
 }
+
+func TestNewPlaneFromPoints(t *testing.T) {
+	a := NewVector3(-1, 0, 1)
+	b := Vector3{}
+	c := NewVector3(1, 0, 1)
+	plane := NewPlaneFromPoints(&a, &b, &c)
+	assert.True(t, plane.Normal.Equals(&Vector3{0, 1, 0}))
+}

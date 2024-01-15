@@ -13,6 +13,16 @@ func NewPlaneFromPointNormal(point *Vector3, normal *Vector3) Plane {
 	}
 }
 
+// NewPlaneFromPoints return a plane with normal (a-b)x(c-b) normalized
+func NewPlaneFromPoints(a *Vector3, b *Vector3, c *Vector3) Plane {
+	v := a.Sub(b)
+	w := c.Sub(b)
+	return Plane{
+		Point:  *a,
+		Normal: v.Cross(&w).Normalized(),
+	}
+}
+
 // TestPoint tests a Point against the plane. Returns:
 // 0 if the Point is behind the plane,
 // 1 if it's in front,
