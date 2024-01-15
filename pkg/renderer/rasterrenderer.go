@@ -61,13 +61,7 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 
 		lightTriangle(&t, &item, lights)
 
-		if t[0].Position.Z <= 0 {
-			continue
-		}
-		if t[1].Position.Z <= 0 {
-			continue
-		}
-		if t[2].Position.Z <= 0 {
+		if t[0].Position.Z <= 0 || t[1].Position.Z <= 0 || t[2].Position.Z <= 0 {
 			continue
 		}
 		projectTriangle(&t)
@@ -88,7 +82,6 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffer *graphics.ImageBuffer, zBuffer *graphics.ZBuffer) {
 	// Bounding box
 	maxX, minX, maxY, minY := getMaxMin(t[0].Position, t[1].Position, t[2].Position)
-
 	minX = basics.Clamp(0, basics.Scalar(winWidth), basics.Floor(minX))
 	minY = basics.Clamp(0, basics.Scalar(winHeight), basics.Floor(minY))
 
@@ -108,7 +101,7 @@ func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffe
 			}
 			point := interpolate3Vertices(&t[0].Position, &t[1].Position, &t[2].Position, w0, w1, w2)
 			// depth test
-			if point.Z < 0 || zBuffer.Get(x, y) < point.Z { // if the point is behind the camera or the depth buffer has already something closer
+			if point.Z < 1 || zBuffer.Get(x, y) < point.Z { // if the point is behind the camera or the depth buffer has already something closer
 				continue
 			}
 			zBuffer.Set(x, y, point.Z)
