@@ -42,8 +42,8 @@ func main() {
 			http.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 			http.HandleFunc("/debug/pprof/trace", pprof.Trace)
 		}()*/
-	//run()
-	testWireFrame()
+	run()
+	//testWireFrame()
 }
 
 func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img []graphics.RGB) {

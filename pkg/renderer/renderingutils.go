@@ -7,13 +7,12 @@ import (
 	"image/color"
 )
 
+// RendererParameters Near clip plane is always assumed to be at (0,0,1) looking at (0,0,1)
 type RendererParameters struct {
 	camera                 *entities.SceneGraphNode
 	planeZ                 basics.Scalar
 	winWidth               int
 	winHeight              int
-	planeNormal            basics.Vector3
-	planeZero              basics.Vector3
 	aspectRatio            basics.Scalar
 	hw                     basics.Scalar
 	hh                     basics.Scalar

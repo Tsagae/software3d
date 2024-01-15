@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"github.com/tsagae/software3d/pkg/basics"
 	"github.com/tsagae/software3d/pkg/entities"
 	"github.com/tsagae/software3d/pkg/graphics"
 )
@@ -38,8 +39,9 @@ func (r *RasterRender) renderSingleItemWireFrame(item renderItem) {
 		projectTriangle(&t)
 
 		// Back face culling
+		forward := basics.Forward()
 		triangleNormal := t.GetSurfaceNormal()
-		if r.parameters.planeNormal.Dot(&triangleNormal) <= 0 {
+		if forward.Dot(&triangleNormal) >= 0 {
 			//	continue
 		}
 

@@ -21,8 +21,6 @@ func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, wi
 			planeZ:                 planeZ,
 			winWidth:               winWidth,
 			winHeight:              winHeight,
-			planeNormal:            basics.NewVector3(0, 0, -1),
-			planeZero:              basics.NewVector3(0, 0, planeZ),
 			aspectRatio:            basics.Scalar(winWidth) / basics.Scalar(winHeight),
 			hw:                     basics.Scalar(winWidth) / 2,
 			hh:                     basics.Scalar(winHeight) / 2,
@@ -68,7 +66,8 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 
 		// Back face culling
 		triangleNormal := t.GetSurfaceNormal()
-		if r.parameters.planeNormal.Dot(&triangleNormal) <= 0 {
+		forward := basics.Forward()
+		if forward.Dot(&triangleNormal) >= 0 {
 			continue
 		}
 
