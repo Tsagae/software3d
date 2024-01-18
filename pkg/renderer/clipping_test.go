@@ -49,7 +49,6 @@ func TestFindIntersectionPoint(t *testing.T) {
 	p0 = basics.NewVector3(1, 0, +1)
 	p1 = basics.NewVector3(2, 0, +1)
 
-	//plane does not segment
 	clippingPoint, isClipped, _, _ = FindIntersectionPoint(&p0, &p1, &plane)
 	assert.False(t, isClipped)
 }
