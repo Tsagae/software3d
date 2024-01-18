@@ -27,29 +27,28 @@ func (r *RasterRender) renderSingleItemWireFrame(item renderItem) {
 		t = iterator.Next()
 		t.ThisApplyTransformation(&item.completeTransform)
 
-		if t[0].Position.Z <= 0 {
-			continue
-		}
-		if t[1].Position.Z <= 0 {
-			continue
-		}
-		if t[2].Position.Z <= 0 {
-			continue
-		}
-		projectTriangle(&t)
+		for i := 0; i < 3; i++ {
+			p0, p1, notCulled := clipLineAgainstFrustum(t[i].Position, t[(i+1)%3].Position, &r.parameters.viewFrustumSides)
 
-		// Back face culling
-		forward := basics.Forward()
-		triangleNormal := t.GetSurfaceNormal()
-		if forward.Dot(&triangleNormal) >= 0 {
-			//	continue
+			if notCulled {
+				p0 = projectPointOnViewPlane(&p0)
+				p1 = projectPointOnViewPlane(&p1)
+				scalePointOnScreen(&p0.X, &p0.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+				scalePointOnScreen(&p1.X, &p1.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+				drawLine(&p0, &p1, &r.imageBuffer, &r.zBuffer)
+			}
 		}
-
-		// Correct scaling for the aspect ratio
-		scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
-
-		drawLine(&t[0].Position, &t[1].Position, &r.imageBuffer, &r.zBuffer)
-		drawLine(&t[1].Position, &t[2].Position, &r.imageBuffer, &r.zBuffer)
-		drawLine(&t[2].Position, &t[0].Position, &r.imageBuffer, &r.zBuffer)
 	}
+}
+
+// returns false if the line is completely outside the frustum
+func clipLineAgainstFrustum(p0, p1 basics.Vector3, frustumSides *[5]basics.Plane) (basics.Vector3, basics.Vector3, bool) {
+	isKept := false
+	for _, plane := range frustumSides {
+		p0, p1, isKept = ClipSegment(&p0, &p1, &plane)
+		if !isKept {
+			return p0, p1, false
+		}
+	}
+	return p0, p1, true
 }

@@ -17,6 +17,7 @@ type RendererParameters struct {
 	hw                     basics.Scalar
 	hh                     basics.Scalar
 	inverseCameraTransform basics.Transform
+	viewFrustumSides       [5]basics.Plane
 }
 
 type renderItem struct {
@@ -175,5 +176,22 @@ func genericDrawLine(a0, a1, b0, m, aMaxCanvas, bMaxCanvas basics.Scalar, setIma
 		}
 		setImage(int(a), int(b), color.RGBA{R: 255, G: 255, B: 255})
 		b += m
+	}
+}
+
+func getViewFrustumSides(aspectRatio basics.Scalar) [5]basics.Plane {
+	{
+		bottomLeft := basics.Vector3{-aspectRatio, -1, 1}
+		bottomRight := basics.Vector3{+aspectRatio, -1, 1}
+		topLeft := basics.Vector3{-aspectRatio, +1, 1}
+		topRight := basics.Vector3{+aspectRatio, +1, 1}
+		forward := basics.Forward()
+		return [5]basics.Plane{
+			basics.NewPlaneFromPoints(&bottomLeft, &basics.Vector3{}, &bottomRight), //bottom
+			basics.NewPlaneFromPoints(&topRight, &basics.Vector3{}, &topLeft),       //top
+			basics.NewPlaneFromPoints(&bottomRight, &basics.Vector3{}, &topRight),   //right
+			basics.NewPlaneFromPoints(&topLeft, &basics.Vector3{}, &bottomLeft),     //left
+			basics.NewPlaneFromPointNormal(&basics.Vector3{}, &forward),             //near
+		}
 	}
 }

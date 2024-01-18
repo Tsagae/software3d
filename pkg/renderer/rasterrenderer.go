@@ -25,6 +25,7 @@ func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, wi
 			hw:                     basics.Scalar(winWidth) / 2,
 			hh:                     basics.Scalar(winHeight) / 2,
 			inverseCameraTransform: inverseCameraT,
+			viewFrustumSides:       getViewFrustumSides(basics.Scalar(winWidth) / basics.Scalar(winHeight)),
 		},
 		zBuffer:     graphics.NewZBuffer(winWidth, winHeight),
 		imageBuffer: graphics.NewImageBuffer(winWidth, winHeight),
