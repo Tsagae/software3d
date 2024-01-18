@@ -37,9 +37,9 @@ func FindIntersectionPoint(p0, p1 *basics.Vector3, plane *basics.Plane) (basics.
 
 // ClipSegment returns the start and end points of a segment after being clipped against a plane and false if the segment is completely on the back side the plane or coplanar to the plane
 func ClipSegment(p0, p1 *basics.Vector3, plane *basics.Plane) (basics.Vector3, basics.Vector3, bool) {
-	intersection, isClipped, test0, test1 := FindIntersectionPoint(p0, p1, plane)
+	intersection, foundIntersection, test0, test1 := FindIntersectionPoint(p0, p1, plane)
 
-	if !isClipped { // there is no intersection
+	if !foundIntersection { // there is no intersection
 		if test0 == 1 {
 			return *p0, *p1, true // segment is completely in front of the plane
 		}
