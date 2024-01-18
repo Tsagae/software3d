@@ -1,7 +1,6 @@
 package graphics
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/tsagae/software3d/pkg/basics"
 	"testing"
@@ -24,7 +23,6 @@ func TestTriangle_GetSurfaceNormal(t *testing.T) {
 	bw := basics.Backward()
 	surfaceNormal := triangle.GetSurfaceNormal()
 
-	fmt.Println(bw, surfaceNormal)
 	assert.True(t, surfaceNormal.Equals(&bw), "Error in surface normal")
 }
 
