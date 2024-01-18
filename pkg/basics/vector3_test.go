@@ -26,15 +26,6 @@ func TestDiv(t *testing.T) {
 }
 
 func TestCross(t *testing.T) {
-	/*
-		void unitTestCross() {
-		    Vector v(1, 2, 3), w(4, 5, 6);
-		    assert(isEqual(cross(v, w), -cross(w, v)));
-		    // Resulting vector is orthogonal to both
-		    assert(isZero(dot(cross(v,w), v)));
-		    assert(isZero(dot(cross(v,w), w)));
-		}
-	*/
 	v := NewVector3(1, 2, 3)
 	w := NewVector3(4, 5, 6)
 
@@ -42,6 +33,10 @@ func TestCross(t *testing.T) {
 	c2 := w.Cross(&v)
 
 	assert.Equal(t, c1, c2.Inverse(), "Vector sum is not anticommutative")
+
+	v = NewVector3(0, 0, 1)
+	w = NewVector3(1, 0, 0)
+	assert.Equal(t, NewVector3(0, 1, 0), v.Cross(&w))
 }
 
 func TestVersor(t *testing.T) {
