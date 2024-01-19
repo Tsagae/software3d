@@ -19,19 +19,19 @@ func FindIntersectionPoint(p0, p1 *basics.Vector3, plane *basics.Plane) (basics.
 		return basics.Vector3{}, false, test0, test1
 	}
 
-	lineN := p1.Sub(p0)
+	lineN := p1.Sub(*p0)
 	planeP := plane.Point
 	planeN := plane.Normal
 
-	p1MinP2 := planeP.Sub(p0)
-	d := lineN.Dot(&planeN)
+	p1MinP2 := planeP.Sub(*p0)
+	d := lineN.Dot(planeN)
 	if d.IsZero() {
 		return basics.Vector3{}, false, test0, test1
 	}
-	k := p1MinP2.Dot(&planeN) / lineN.Dot(&planeN)
+	k := p1MinP2.Dot(planeN) / lineN.Dot(planeN)
 
 	nK := lineN.Mul(k)
-	intersection := p0.Add(&nK)
+	intersection := p0.Add(nK)
 	return intersection, true, test0, test1
 }
 

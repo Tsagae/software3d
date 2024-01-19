@@ -27,21 +27,21 @@ func TestQuaternionRotation(t *testing.T) {
 		v1 = q.Rotated(v1)
 	}
 
-	assert.True(t, v0.Equals(&v1), "Error in rotation accumulation on a vector (should be equal to the starting vector)")
+	assert.True(t, v0.Equals(v1), "Error in rotation accumulation on a vector (should be equal to the starting vector)")
 
 	v1 = q.Rotated(v1)
-	assert.False(t, v0.Equals(&v1), "Error in rotation accumulation on a vector (should be different to the starting vector)")
+	assert.False(t, v0.Equals(v1), "Error in rotation accumulation on a vector (should be different to the starting vector)")
 
 	q = NewQuaternionFromAngleAndAxis(180, Up())
 
 	v := NewVector3(7, 2, 6)
 	v1 = NewVector3(-7, 2, -6)
 	v = q.Rotated(v)
-	assert.Truef(t, v.Equals(&v1), "Error in vector rotation")
+	assert.Truef(t, v.Equals(v1), "Error in vector rotation")
 
 	zeroV := Vector3{}
 	newZero := q.Rotated(zeroV)
-	assert.True(t, zeroV.Equals(&newZero), "Zero vector rotated is not zero")
+	assert.True(t, zeroV.Equals(newZero), "Zero vector rotated is not zero")
 }
 
 func TestNewQuaternionFromAngleAndAxis(t *testing.T) {
@@ -56,5 +56,5 @@ func TestNewQuaternionFromEulerAngles(t *testing.T) {
 	p := NewVector3(1, 1, 1)
 	p = q.Rotated(p)
 	expected := NewVector3(-1, -1, 1)
-	assert.Truef(t, expected.Equals(&p), "Error in quaternion from euler angles got: %v, expected: %v", p, expected)
+	assert.Truef(t, expected.Equals(p), "Error in quaternion from euler angles got: %v, expected: %v", p, expected)
 }

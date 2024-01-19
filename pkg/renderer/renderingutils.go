@@ -67,12 +67,7 @@ func findWeights(v1, v2, v3, target *basics.Vector3) (basics.Scalar, basics.Scal
 }
 
 func interpolate3Vertices(v1, v2, v3 *basics.Vector3, w1, w2, w3 basics.Scalar) basics.Vector3 {
-	point := v1.Mul(w1)
-	temp := v2.Mul(w2)
-	point.ThisAdd(temp)
-	temp = v3.Mul(w3)
-	point.ThisAdd(temp)
-	return point
+	return v1.Mul(w1).Add(v2.Mul(w2)).Add(v3.Mul(w3))
 }
 
 // Returns maxX, minX, maxY, minY

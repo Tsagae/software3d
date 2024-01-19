@@ -68,7 +68,7 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 		// Back face culling
 		triangleNormal := t.GetSurfaceNormal()
 		forward := basics.Forward()
-		if forward.Dot(&triangleNormal) >= 0 {
+		if forward.Dot(triangleNormal) >= 0 {
 			continue
 		}
 
@@ -112,7 +112,7 @@ func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffe
 			color2 := &t[2].Color
 			colorVector := interpolate3Vertices(color0, color1, color2, w0, w1, w2)
 			// Scaling to uint8 range
-			colorVector.ThisMul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
+			colorVector = colorVector.Mul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
 			imageBuffer.Set(x, y, colorVector.ToColor())
 		}
 	}

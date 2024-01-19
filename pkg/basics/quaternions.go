@@ -20,7 +20,7 @@ func NewRawQuaternion(re Scalar, im Vector3) Quaternion {
 func NewQuaternionFromAngleAndAxis(angle Scalar, axis Vector3) Quaternion {
 	angleRad := angle * math.Pi / 180
 	re := math.Cos(float64(angleRad / 2))
-	axis.ThisMul(Scalar(math.Sin(float64(angleRad / 2))))
+	axis = axis.Mul(Scalar(math.Sin(float64(angleRad / 2))))
 	quat := NewRawQuaternion(Scalar(re), axis)
 	quat.ThisNormalize()
 	return quat
@@ -75,27 +75,27 @@ func (q *Quaternion) IsZero() bool {
 
 func (q *Quaternion) Equals(p *Quaternion) bool {
 	pImInverse := p.Im.Inverse()
-	return q.Re.Equals(p.Re) && q.Im.Equals(&p.Im) || q.Re.Equals(-p.Re) && q.Im.Equals(&pImInverse)
+	return q.Re.Equals(p.Re) && q.Im.Equals(p.Im) || q.Re.Equals(-p.Re) && q.Im.Equals(pImInverse)
 }
 
 /* Mutable operations on this */
 
 func (q *Quaternion) ThisConjugate() {
-	q.Im.ThisInvert()
+	ThisInvert(&q.Im)
 }
 
 func (q *Quaternion) ThisAdd(p *Quaternion) {
-	q.Im.ThisAdd(p.Im)
+	ThisAdd(&q.Im, p.Im)
 	q.Re += p.Re
 }
 
 // ThisMul Multiplication of quaternions/Accumulation of rotations. The result is normalized
 func (q *Quaternion) ThisMul(p *Quaternion) {
 	//can be optimized
-	newRe := q.Re*p.Re - q.Im.Dot(&p.Im)
+	newRe := q.Re*p.Re - q.Im.Dot(p.Im)
 	newIm := p.Im.Mul(q.Re)
-	newIm.ThisAdd(q.Im.Mul(p.Re))
-	newIm.ThisAdd(q.Im.Cross(&p.Im))
+	ThisAdd(&newIm, q.Im.Mul(p.Re))
+	ThisAdd(&newIm, q.Im.Cross(p.Im))
 	q.Im = newIm
 	q.Re = newRe
 	q.ThisNormalize() //normalization at the end to avoid error stacking
@@ -103,13 +103,13 @@ func (q *Quaternion) ThisMul(p *Quaternion) {
 
 // ThisMulScalar Multiples both the imaginary part and the real part with the scalar a
 func (q *Quaternion) ThisMulScalar(a Scalar) {
-	q.Im.ThisMul(a)
+	ThisMul(&q.Im, a)
 	q.Re *= a
 }
 
 func (q *Quaternion) ThisNormalize() {
 	scaling := math.Sqrt(float64(q.Im.X*q.Im.X + q.Im.Y*q.Im.Y + q.Im.Z*q.Im.Z + q.Re*q.Re))
-	q.Im.ThisDiv(Scalar(scaling))
+	ThisDiv(&q.Im, Scalar(scaling))
 	q.Re /= Scalar(scaling)
 }
 
@@ -146,8 +146,8 @@ func (q Quaternion) Rotated(v Vector3) Vector3 {
 	vQuat := NewRawQuaternion(0, v)
 	q.ThisMul(&vQuat) //this is always zero
 	q.ThisMul(&conj)
-	q.Im.ThisMul(beforeLen) //preserve scaling
-	return q.Im             //I only need the imaginary part
+	ThisMul(&q.Im, beforeLen) //preserve scaling
+	return q.Im               //I only need the imaginary part
 }
 
 // LookAt target is a point
@@ -157,10 +157,9 @@ func (orientation *Matrix3) LookAt(direction *Vector3) Quaternion {
 	z := *direction
 	z.Normalized()
 
-	x := up.Cross(&z)
-	x.ThisNormalize()
+	x := up.Cross(z).Normalized()
 
-	y := z.Cross(&x)
+	y := z.Cross(x)
 
 	/*
 		qw= √(1 + m00 + m11 + m22) /2

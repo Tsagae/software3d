@@ -42,48 +42,48 @@ func Backward() Vector3 {
 
 /* Equality and zero */
 
-func (v *Vector3) IsZero() bool {
+func (v Vector3) IsZero() bool {
 	return v.Length() < epsilon
 }
 
-func (v *Vector3) Equals(h *Vector3) bool {
+func (v Vector3) Equals(h Vector3) bool {
 	return v.X.Equals(h.X) && v.Y.Equals(h.Y) && v.Z.Equals(h.Z)
 }
 
 /* Mutable operations on this */
 
-func (v *Vector3) ThisNormalize() {
+func ThisNormalize(v *Vector3) {
 	length := v.Length()
 	v.X /= length
 	v.Y /= length
 	v.Z /= length
 }
 
-func (v *Vector3) ThisMul(a Scalar) {
+func ThisMul(v *Vector3, a Scalar) {
 	v.X *= a
 	v.Y *= a
 	v.Z *= a
 }
 
-func (v *Vector3) ThisDiv(a Scalar) {
+func ThisDiv(v *Vector3, a Scalar) {
 	v.X /= a
 	v.Y /= a
 	v.Z /= a
 }
 
-func (v *Vector3) ThisAdd(h Vector3) {
+func ThisAdd(v *Vector3, h Vector3) {
 	v.X += h.X
 	v.Y += h.Y
 	v.Z += h.Z
 }
 
-func (v *Vector3) ThisSub(h Vector3) {
+func ThisSub(v *Vector3, h Vector3) {
 	v.X -= h.X
 	v.Y -= h.Y
 	v.Z -= h.Z
 }
 
-func (v *Vector3) ThisInvert() {
+func ThisInvert(v *Vector3) {
 	v.X = -v.X
 	v.Y = -v.Y
 	v.Z = -v.Z
@@ -92,45 +92,45 @@ func (v *Vector3) ThisInvert() {
 // Operations that do not change this
 
 func (v Vector3) Normalized() Vector3 {
-	v.ThisNormalize()
+	ThisNormalize(&v)
 	return v
 }
 
 func (v Vector3) Mul(a Scalar) Vector3 {
-	v.ThisMul(a)
+	ThisMul(&v, a)
 	return v
 }
 
 // MulComponents Per component multiplication
-func (v *Vector3) MulComponents(h *Vector3) Vector3 {
+func (v Vector3) MulComponents(h Vector3) Vector3 {
 	return Vector3{v.X * h.X, v.Y * h.Y, v.Z * h.Z}
 }
 
 func (v Vector3) Div(a Scalar) Vector3 {
-	v.ThisDiv(a)
+	ThisDiv(&v, a)
 	return v
 }
 
-func (v Vector3) Add(h *Vector3) Vector3 {
-	v.ThisAdd(*h)
+func (v Vector3) Add(h Vector3) Vector3 {
+	ThisAdd(&v, h)
 	return v
 }
 
-func (v Vector3) Sub(h *Vector3) Vector3 {
-	v.ThisSub(*h)
+func (v Vector3) Sub(h Vector3) Vector3 {
+	ThisSub(&v, h)
 	return v
 }
 
 func (v Vector3) Inverse() Vector3 {
-	v.ThisInvert()
+	ThisInvert(&v)
 	return v
 }
 
-func (v *Vector3) Dot(h *Vector3) Scalar {
+func (v Vector3) Dot(h Vector3) Scalar {
 	return v.X*h.X + v.Y*h.Y + v.Z*h.Z
 }
 
-func (v *Vector3) Cross(h *Vector3) Vector3 {
+func (v Vector3) Cross(h Vector3) Vector3 {
 	return Vector3{
 		X: v.Y*h.Z - v.Z*h.Y,
 		Y: v.Z*h.X - v.X*h.Z,
@@ -145,14 +145,14 @@ func (v Vector3) Length() Scalar {
 /* Color */
 
 // AngleBetween Returns the angle in radians between two vectors
-func (v *Vector3) AngleBetween(h Vector3) Scalar {
-	v2 := v.Normalized()
-	h.ThisNormalize()
-	return Scalar(math.Atan2(float64(v2.Cross(&h).Length()), float64(v2.Dot(&h))))
+func (v Vector3) AngleBetween(h Vector3) Scalar {
+	ThisNormalize(&v)
+	ThisNormalize(&h)
+	return Scalar(math.Atan2(float64(v.Cross(h).Length()), float64(v.Dot(h))))
 }
 
 // ToColor Returns a color in the range 0-255 for each component with 255 alpha
-func (v *Vector3) ToColor() color.RGBA {
+func (v Vector3) ToColor() color.RGBA {
 	return color.RGBA{R: uint8(v.X), G: uint8(v.Y), B: uint8(v.Z), A: 255}
 }
 

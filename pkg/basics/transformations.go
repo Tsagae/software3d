@@ -31,7 +31,7 @@ func (t *Transform) ThisCumulate(t2 *Transform) {
 	t.Scaling *= t2.Scaling
 	//b.Rotation = b.Rotation.Mul(&t2.Rotation)
 	t.Rotation = t2.Rotation.Mul(&t.Rotation)
-	t.Translation = t2.Rotation.Rotated(t.Translation.Mul(t2.Scaling)).Add(&t2.Translation)
+	t.Translation = t2.Rotation.Rotated(t.Translation.Mul(t2.Scaling)).Add(t2.Translation)
 }
 
 func (t *Transform) ThisInvert() {
@@ -62,9 +62,9 @@ func (t *Transform) ApplyToVector(v *Vector3) {
 // modifies p
 func (t *Transform) ApplyToPoint(p *Vector3) {
 	//return r.apply_to( s * p ) + t;
-	*p = t.Rotation.Rotated(p.Mul(t.Scaling)).Add(&t.Translation)
+	*p = t.Rotation.Rotated(p.Mul(t.Scaling)).Add(t.Translation)
 }
 
 func (t *Transform) Equals(t2 *Transform) bool {
-	return t.Scaling.Equals(t2.Scaling) && t.Rotation.Equals(&t2.Rotation) && t.Translation.Equals(&t2.Translation)
+	return t.Scaling.Equals(t2.Scaling) && t.Rotation.Equals(&t2.Rotation) && t.Translation.Equals(t2.Translation)
 }

@@ -245,31 +245,31 @@ func run() int {
 func inputHandler(window *glfw.Window, camera *entities.SceneGraphNode) {
 	cameraDir := camera.Orientation()
 	cameraDir[2].Y = 0
-	cameraDir[2].ThisNormalize()
+	cameraDir[2] = cameraDir[2].Normalized()
 	movement := basics.NewZeroTransform()
 	var tempMov basics.Vector3
 	// Movement
 	if window.GetKey(glfw.KeyW) == glfw.Press {
 		tempMov = cameraDir[2].Mul(0.1)
-		movement.Translation.ThisAdd(tempMov)
+		basics.ThisAdd(&movement.Translation, tempMov)
 	}
 	if window.GetKey(glfw.KeyS) == glfw.Press {
 		tempMov = cameraDir[2].Mul(-0.1)
-		movement.Translation.ThisAdd(tempMov)
+		basics.ThisAdd(&movement.Translation, tempMov)
 	}
 	if window.GetKey(glfw.KeyD) == glfw.Press {
 		tempMov = cameraDir[0].Mul(0.1)
-		movement.Translation.ThisAdd(tempMov)
+		basics.ThisAdd(&movement.Translation, tempMov)
 	}
 	if window.GetKey(glfw.KeyA) == glfw.Press {
 		tempMov = cameraDir[0].Mul(-0.1)
-		movement.Translation.ThisAdd(tempMov)
+		basics.ThisAdd(&movement.Translation, tempMov)
 	}
 	if window.GetKey(glfw.KeyQ) == glfw.Press {
-		movement.Translation.ThisAdd(basics.Up().Mul(0.1))
+		basics.ThisAdd(&movement.Translation, basics.Up().Mul(0.1))
 	}
 	if window.GetKey(glfw.KeyE) == glfw.Press {
-		movement.Translation.ThisAdd(basics.Down().Mul(0.1))
+		basics.ThisAdd(&movement.Translation, basics.Down().Mul(0.1))
 	}
 	// View Rotation
 	if window.GetKey(glfw.KeyUp) == glfw.Press {

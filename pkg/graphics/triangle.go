@@ -53,10 +53,9 @@ func (t *Triangle) GetAverageZ() basics.Scalar {
 }
 
 func computeNormalFromVertices(v0 basics.Vector3, v1 basics.Vector3, v2 basics.Vector3) basics.Vector3 {
-	u := v1.Sub(&v0)
-	v := v2.Sub(&v0)
-	normal := u.Cross(&v)
-	normal.ThisNormalize()
+	u := v1.Sub(v0)
+	v := v2.Sub(v0)
+	normal := u.Cross(v).Normalized()
 	return normal
 }
 

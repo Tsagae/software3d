@@ -15,11 +15,11 @@ func NewPlaneFromPointNormal(point *Vector3, normal *Vector3) Plane {
 
 // NewPlaneFromPoints return a plane with normal (a-b)x(c-b) normalized
 func NewPlaneFromPoints(a *Vector3, b *Vector3, c *Vector3) Plane {
-	v := a.Sub(b)
-	w := c.Sub(b)
+	v := a.Sub(*b)
+	w := c.Sub(*b)
 	return Plane{
 		Point:  *a,
-		Normal: v.Cross(&w).Normalized(),
+		Normal: v.Cross(w).Normalized(),
 	}
 }
 
@@ -28,12 +28,11 @@ func NewPlaneFromPoints(a *Vector3, b *Vector3, c *Vector3) Plane {
 // 1 if it's in front,
 // 2 if it's on the plane
 func (p *Plane) TestPoint(point *Vector3) uint8 {
-	dist := point.Sub(&p.Point)
-	dist.ThisNormalize()
-	if dist.Dot(&p.Normal).IsZero() {
+	dist := point.Sub(p.Point).Normalized()
+	if dist.Dot(p.Normal).IsZero() {
 		return 2
 	}
-	if dist.Dot(&p.Normal) > 0 {
+	if dist.Dot(p.Normal) > 0 {
 		return 1
 	}
 	return 0
@@ -45,9 +44,9 @@ func (p *Plane) CoplanarVectors() (Vector3, Vector3) {
 	temp.X += 4129
 	temp.Y += 4133
 	temp.Z += 4139
-	temp.ThisNormalize()
+	ThisNormalize(&temp)
 
-	coplanarA := pNormal.Cross(&temp).Normalized()
-	coplanarB := pNormal.Cross(&coplanarA).Normalized()
+	coplanarA := pNormal.Cross(temp).Normalized()
+	coplanarB := pNormal.Cross(coplanarA).Normalized()
 	return coplanarA, coplanarB
 }

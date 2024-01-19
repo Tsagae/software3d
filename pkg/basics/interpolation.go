@@ -1,16 +1,13 @@
 package basics
 
-// Allows extrapolation
+// LerpVector3 Allows extrapolation
 func LerpVector3(a *Vector3, b *Vector3, t Scalar) Vector3 {
 	//a + t(b - a) allows extrapolation
-	tba := b.Sub(a).Mul(t)
-	return a.Add(&tba)
+	return a.Add(b.Sub(*a).Mul(t))
 }
 
 func NLerpVector3(a *Vector3, b *Vector3, t Scalar) Vector3 {
-	v := LerpVector3(a, b, t)
-	v.ThisNormalize()
-	return v
+	return LerpVector3(a, b, t).Normalized()
 }
 
 func mixQuaternion(a Quaternion, b Quaternion, t Scalar) Quaternion {
@@ -19,7 +16,7 @@ func mixQuaternion(a Quaternion, b Quaternion, t Scalar) Quaternion {
 		Quaternion res = a * (1 - t) + b * t * d; // linear interpolation...
 		return normalize(res);  // ...then re-normalized (NLERP)
 	*/
-	d := Sign(a.Im.Dot(&b.Im) + a.Re*b.Re)
+	d := Sign(a.Im.Dot(b.Im) + a.Re*b.Re)
 	a.ThisMulScalar(1 - t)
 	b.ThisMulScalar(t * d)
 

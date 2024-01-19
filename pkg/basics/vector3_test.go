@@ -12,12 +12,12 @@ func TestCommutativeSum(t *testing.T) {
 	v := NewVector3(1, 2, 3)
 	w := NewVector3(4, 5, 6)
 
-	assert.Equal(t, v.Add(&w), w.Add(&v), "Vector sum is not commutative")
+	assert.Equal(t, v.Add(w), w.Add(v), "Vector sum is not commutative")
 }
 
 func TestSub(t *testing.T) {
 	left := Left()
-	assert.Equal(t, NewVector3(2, 0, 0), Right().Sub(&left), "Incorrect vector subtraction")
+	assert.Equal(t, NewVector3(2, 0, 0), Right().Sub(left), "Incorrect vector subtraction")
 }
 
 func TestDiv(t *testing.T) {
@@ -29,14 +29,14 @@ func TestCross(t *testing.T) {
 	v := NewVector3(1, 2, 3)
 	w := NewVector3(4, 5, 6)
 
-	c1 := v.Cross(&w)
-	c2 := w.Cross(&v)
+	c1 := v.Cross(w)
+	c2 := w.Cross(v)
 
 	assert.Equal(t, c1, c2.Inverse(), "Vector sum is not anticommutative")
 
 	v = NewVector3(0, 0, 1)
 	w = NewVector3(1, 0, 0)
-	assert.Equal(t, NewVector3(0, 1, 0), v.Cross(&w))
+	assert.Equal(t, NewVector3(0, 1, 0), v.Cross(w))
 }
 
 func TestVersor(t *testing.T) {
@@ -52,7 +52,7 @@ func TestVersor(t *testing.T) {
 
 	t1 := d.Mul(v.Length())
 
-	assert.True(t, t1.Equals(&v), "Normalization error")
+	assert.True(t, t1.Equals(v), "Normalization error")
 
 	assert.True(t, d.Length().Equals(1), "Versor is not unitary")
 }
@@ -66,5 +66,5 @@ func TestAngleBetween(t *testing.T) {
 func TestMulComponents(t *testing.T) {
 	v := NewVector3(10, 20, 30)
 	w := NewVector3(2, 3, 4)
-	assert.Equal(t, NewVector3(20, 60, 120), v.MulComponents(&w))
+	assert.Equal(t, NewVector3(20, 60, 120), v.MulComponents(w))
 }

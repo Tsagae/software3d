@@ -52,7 +52,7 @@ func TestCumulation(t *testing.T) {
 	t1.ApplyToPoint(&p0)
 	t3.ApplyToPoint(&p0)
 
-	if !p0.Equals(&p1) {
+	if !p0.Equals(p1) {
 		t.Errorf("Error in inverse transform")
 	}
 }
