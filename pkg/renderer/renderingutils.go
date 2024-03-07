@@ -54,22 +54,6 @@ func projectPointOnViewPlane(p *basics.Vector3) basics.Vector3 {
 	return d
 }
 
-func findWeights(v1, v2, v3, target *basics.Vector3) (basics.Scalar, basics.Scalar, basics.Scalar) {
-	// most of this can be cached when finding weights inside the same triangle TODO
-	den := (v2.Y-v3.Y)*(v1.X-v3.X) + (v3.X-v2.X)*(v1.Y-v3.Y)
-	t1 := target.X - v3.X
-	t2 := target.Y - v3.Y
-
-	w1 := ((v2.Y-v3.Y)*t1 + (v3.X-v2.X)*t2) / den
-	w2 := ((v3.Y-v1.Y)*t1 + (v1.X-v3.X)*t2) / den
-	w3 := 1 - w1 - w2
-	return w1, w2, w3
-}
-
-func interpolate3Vertices(v1, v2, v3 *basics.Vector3, w1, w2, w3 basics.Scalar) basics.Vector3 {
-	return v1.Mul(w1).Add(v2.Mul(w2)).Add(v3.Mul(w3))
-}
-
 // Returns maxX, minX, maxY, minY
 func getMaxMin(p0, p1, p2 basics.Vector3) (basics.Scalar, basics.Scalar, basics.Scalar, basics.Scalar) {
 	maxX := max(p0.X, p1.X, p2.X)

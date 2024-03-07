@@ -6,12 +6,6 @@ import (
 
 type Triangle [3]Vertex
 
-type Vertex struct {
-	Position basics.Vector3
-	Color    basics.Vector3
-	Normal   basics.Vector3
-}
-
 /* Constructors */
 
 // NewTriangle Orientation of vertices is clockwise
@@ -62,4 +56,25 @@ func computeNormalFromVertices(v0 basics.Vector3, v1 basics.Vector3, v2 basics.V
 // GetSurfaceNormal Normal of the triangle surface, ignores the mesh normals
 func (t *Triangle) GetSurfaceNormal() basics.Vector3 {
 	return computeNormalFromVertices(t[0].Position, t[1].Position, t[2].Position)
+}
+
+func (t *Triangle) InterpolateColor(w1, w2, w3 basics.Scalar) basics.Vector3 {
+	return basics.Interpolate3(&t[0].Color, &t[1].Color, &t[2].Color, w1, w2, w3)
+}
+
+func (t *Triangle) InterpolatePosition(w1, w2, w3 basics.Scalar) basics.Vector3 {
+	return basics.Interpolate3(&t[0].Position, &t[1].Position, &t[2].Position, w1, w2, w3)
+}
+
+func (t *Triangle) InterpolateVertexProps(w1, w2, w3 basics.Scalar) Vertex {
+	return Vertex{
+		basics.Interpolate3(&t[0].Position, &t[1].Position, &t[2].Position, w1, w2, w3),
+		basics.Interpolate3(&t[0].Color, &t[1].Color, &t[2].Color, w1, w2, w3),
+		basics.Interpolate3(&t[0].Normal, &t[1].Normal, &t[2].Normal, w1, w2, w3),
+	}
+}
+
+func (t *Triangle) FindWeightsPosition(target *basics.Vector3) (basics.Scalar, basics.Scalar, basics.Scalar) {
+	// most of this can be cached when finding weights inside the same triangle TODO
+	return basics.FindWeights3(&t[0].Position, &t[1].Position, &t[2].Position, target)
 }
