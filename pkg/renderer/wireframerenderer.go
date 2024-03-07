@@ -42,9 +42,9 @@ func (r *RasterRender) renderSingleItemWireFrame(item renderItem) {
 }
 
 // returns false if the line is completely outside the frustum
-func clipLineAgainstFrustum(p0, p1 basics.Vector3, frustumSides *[5]basics.Plane) (basics.Vector3, basics.Vector3, bool) {
+func clipLineAgainstFrustum(p0, p1 basics.Vector3, frustumSides *[]basics.Plane) (basics.Vector3, basics.Vector3, bool) {
 	isKept := false
-	for _, plane := range frustumSides {
+	for _, plane := range *frustumSides {
 		p0, p1, isKept = ClipSegment(&p0, &p1, &plane)
 		if !isKept {
 			return p0, p1, false

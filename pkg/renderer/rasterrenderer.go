@@ -58,24 +58,27 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 		}
 		t.ThisApplyTransformation(&item.completeTransform)
 
-		lightTriangle(&t, &item, lights)
+		triangles := ClipTriangleAgainsPlanes(&t, r.parameters.viewFrustumSides)
 
-		if t[0].Position.Z <= 0 || t[1].Position.Z <= 0 || t[2].Position.Z <= 0 {
-			continue
+		for _, t := range triangles {
+
+			lightTriangle(&t, &item, lights)
+
+			projectTriangle(&t)
+
+			// Back face culling
+			triangleNormal := t.GetSurfaceNormal()
+			forward := basics.Forward()
+			if forward.Dot(triangleNormal) >= 0 {
+				continue
+			}
+
+			// Correct scaling for the aspect ratio
+			scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+
+			rasterTriangle(t, r.parameters.winWidth, r.parameters.winHeight, &r.imageBuffer, &r.zBuffer)
+
 		}
-		projectTriangle(&t)
-
-		// Back face culling
-		triangleNormal := t.GetSurfaceNormal()
-		forward := basics.Forward()
-		if forward.Dot(triangleNormal) >= 0 {
-			continue
-		}
-
-		// Correct scaling for the aspect ratio
-		scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
-
-		rasterTriangle(t, r.parameters.winWidth, r.parameters.winHeight, &r.imageBuffer, &r.zBuffer)
 	}
 }
 
