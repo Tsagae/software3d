@@ -95,11 +95,11 @@ func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffe
 		for x := int(minX); x < int(maxX); x++ {
 			target2D := basics.NewVector3(basics.Scalar(x), basics.Scalar(y), 0)
 			// find weights for interpolation
-			w0, w1, w2 := findWeights(&t[0].Position, &t[1].Position, &t[2].Position, &target2D)
+			w0, w1, w2 := t.FindWeightsPosition(&target2D)
 			if w0 < 0 || w1 < 0 || w2 < 0 {
 				continue // point lands outside the triangle
 			}
-			point := interpolate3Vertices(&t[0].Position, &t[1].Position, &t[2].Position, w0, w1, w2)
+			point := t.InterpolatePosition(w0, w1, w2)
 			// depth test
 			if point.Z < 1 || zBuffer.Get(x, y) < point.Z { // if the point is behind the camera or the depth buffer has already something closer
 				continue
@@ -107,10 +107,8 @@ func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffe
 			zBuffer.Set(x, y, point.Z)
 
 			// set color
-			color0 := &t[0].Color
-			color1 := &t[1].Color
-			color2 := &t[2].Color
-			colorVector := interpolate3Vertices(color0, color1, color2, w0, w1, w2)
+			colorVector := t.InterpolateColor(w0, w1, w2)
+
 			// Scaling to uint8 range
 			colorVector = colorVector.Mul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
 			imageBuffer.Set(x, y, colorVector.ToColor())
