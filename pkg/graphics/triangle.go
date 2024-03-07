@@ -6,12 +6,6 @@ import (
 
 type Triangle [3]Vertex
 
-type Vertex struct {
-	Position basics.Vector3
-	Color    basics.Vector3
-	Normal   basics.Vector3
-}
-
 /* Constructors */
 
 // NewTriangle Orientation of vertices is clockwise
