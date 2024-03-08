@@ -15,6 +15,7 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
+var windowTitle = "Software3D"
 var winWidth, winHeight int = 800, 600
 
 // tranformations
@@ -69,7 +70,7 @@ func testClipping() {
 	}
 	defer glfw.Terminate()
 
-	window, err := glfw.CreateWindow(winWidth, winHeight, "My Window", nil, nil)
+	window, err := glfw.CreateWindow(winWidth, winHeight, windowTitle, nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -148,7 +149,7 @@ func testWireFrame() {
 	}
 	defer glfw.Terminate()
 
-	window, err := glfw.CreateWindow(winWidth, winHeight, "My Window", nil, nil)
+	window, err := glfw.CreateWindow(winWidth, winHeight, windowTitle, nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -233,7 +234,7 @@ func run() int {
 	}
 	defer glfw.Terminate()
 
-	window, err := glfw.CreateWindow(winWidth, winHeight, "My Window", nil, nil)
+	window, err := glfw.CreateWindow(winWidth, winHeight, windowTitle, nil, nil)
 	if err != nil {
 		panic(err)
 	}
