@@ -1,9 +1,11 @@
 package renderer
 
 import (
+	"fmt"
 	"github.com/tsagae/software3d/pkg/basics"
 	"github.com/tsagae/software3d/pkg/entities"
 	"github.com/tsagae/software3d/pkg/graphics"
+	"math"
 )
 
 type RasterRender struct {
@@ -58,24 +60,37 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 		}
 		t.ThisApplyTransformation(&item.completeTransform)
 
-		lightTriangle(&t, &item, lights)
-
-		if t[0].Position.Z <= 0 || t[1].Position.Z <= 0 || t[2].Position.Z <= 0 {
-			continue
-		}
-		projectTriangle(&t)
-
-		// Back face culling
-		triangleNormal := t.GetSurfaceNormal()
-		forward := basics.Forward()
-		if forward.Dot(triangleNormal) >= 0 {
-			continue
+		for _, vertex := range t {
+			if math.IsNaN(float64(vertex.Position.X)) || math.IsNaN(float64(vertex.Position.Y)) || math.IsNaN(float64(vertex.Position.Z)) {
+				fmt.Println("error before")
+			}
 		}
 
-		// Correct scaling for the aspect ratio
-		scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+		triangles := ClipTriangleAgainsPlanes(&t, r.parameters.viewFrustumSides)
 
-		rasterTriangle(t, r.parameters.winWidth, r.parameters.winHeight, &r.imageBuffer, &r.zBuffer)
+		for _, t := range triangles {
+			for _, vertex := range t {
+				if math.IsNaN(float64(vertex.Position.X)) || math.IsNaN(float64(vertex.Position.Y)) || math.IsNaN(float64(vertex.Position.Z)) {
+					fmt.Println("error after")
+				}
+			}
+
+			lightTriangle(&t, &item, lights)
+
+			projectTriangle(&t)
+			// Back face culling
+			triangleNormal := t.GetSurfaceNormal()
+			forward := basics.Forward()
+			if forward.Dot(triangleNormal) > 0 {
+				continue
+			}
+
+			// Correct scaling for the aspect ratio
+			scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+
+			rasterTriangle(t, r.parameters.winWidth, r.parameters.winHeight, &r.imageBuffer, &r.zBuffer)
+
+		}
 	}
 }
 
@@ -95,23 +110,22 @@ func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffe
 		for x := int(minX); x < int(maxX); x++ {
 			target2D := basics.NewVector3(basics.Scalar(x), basics.Scalar(y), 0)
 			// find weights for interpolation
-			w0, w1, w2 := t.FindWeightsPosition(&target2D)
+			w0, w1, w2 := basics.FindWeights2D(&t[0].Position, &t[1].Position, &t[2].Position, &target2D)
 			if w0 < 0 || w1 < 0 || w2 < 0 {
 				continue // point lands outside the triangle
 			}
-			point := t.InterpolatePosition(w0, w1, w2)
+			point := t.InterpolateVertexProps(w0, w1, w2)
+
 			// depth test
-			if point.Z < 1 || zBuffer.Get(x, y) < point.Z { // if the point is behind the camera or the depth buffer has already something closer
+			if zBuffer.Get(x, y) < point.Position.Z { // if the point is behind the camera or the depth buffer has already something closer
 				continue
 			}
-			zBuffer.Set(x, y, point.Z)
 
-			// set color
-			colorVector := t.InterpolateColor(w0, w1, w2)
+			zBuffer.Set(x, y, point.Position.Z)
 
 			// Scaling to uint8 range
-			colorVector = colorVector.Mul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
-			imageBuffer.Set(x, y, colorVector.ToColor())
+			point.Color = point.Color.Mul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
+			imageBuffer.Set(x, y, point.Color.ToColor())
 		}
 	}
 }

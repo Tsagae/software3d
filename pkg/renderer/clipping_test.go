@@ -3,6 +3,7 @@ package renderer
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/tsagae/software3d/pkg/basics"
+	"github.com/tsagae/software3d/pkg/graphics"
 	"testing"
 )
 
@@ -103,4 +104,104 @@ func TestClipSegment(t *testing.T) {
 	// segment is discarded for being coplanar
 	_, _, isKept = ClipSegment(&expectedIntersectionA, &expectedIntersectionB, &plane)
 	assert.False(t, isKept)
+}
+
+func TestClipTriangle1Side(t *testing.T) {
+	zero := basics.Vector3{}
+	up := basics.Up()
+	plane := basics.NewPlaneFromPointNormal(&zero, &up)
+	buffer := make([]graphics.Triangle, 0)
+
+	// 1 side in front of plane
+	tri := graphics.Triangle{
+		graphics.Vertex{
+			Position: basics.Vector3{X: -1, Y: -1},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: 1, Y: -1},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{Y: 1},
+		}}
+	expected := graphics.Triangle{
+		graphics.Vertex{
+			Position: basics.Vector3{X: 0.5},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{Y: 1},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: -0.5},
+		}}
+	buffer = ClipTriangle(&tri, &plane)
+	assert.Equal(t, 1, len(buffer))
+	assert.Equal(t, expected, buffer[0])
+
+	tri = graphics.Triangle{
+		graphics.Vertex{
+			Position: basics.Vector3{Y: 1},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: -1, Y: -1},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: 1, Y: -1},
+		}}
+	expected = graphics.Triangle{
+		graphics.Vertex{
+			Position: basics.Vector3{X: -0.5},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: 0.5},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{Y: 1},
+		}}
+	buffer = ClipTriangle(&tri, &plane)
+	assert.Equal(t, 1, len(buffer))
+	assert.Equal(t, expected, buffer[0])
+
+}
+
+func TestClipTriangle2Sides(t *testing.T) {
+	// 2 sides in front of plane
+	zero := basics.Vector3{}
+	up := basics.Up()
+	plane := basics.NewPlaneFromPointNormal(&zero, &up)
+	buffer := make([]graphics.Triangle, 0)
+
+	tri := graphics.Triangle{
+		graphics.Vertex{
+			Position: basics.Vector3{X: -1, Y: 1},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{Y: -1},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: 1, Y: 1},
+		}}
+	expected := graphics.Triangle{
+		graphics.Vertex{
+			Position: basics.Vector3{X: -0.5},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: 0.5},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: 1, Y: 1},
+		}}
+	expectedSecond := graphics.Triangle{
+		graphics.Vertex{
+			Position: basics.Vector3{X: 1, Y: 1},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: -1, Y: 1},
+		},
+		graphics.Vertex{
+			Position: basics.Vector3{X: -0.5},
+		}}
+	buffer = ClipTriangle(&tri, &plane)
+	assert.Equal(t, 2, len(buffer))
+	assert.Equal(t, expected, buffer[0])
+	assert.Equal(t, expectedSecond, buffer[1])
 }

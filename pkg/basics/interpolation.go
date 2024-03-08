@@ -31,6 +31,20 @@ func Interpolate3(v1, v2, v3 *Vector3, w1, w2, w3 Scalar) Vector3 {
 
 func FindWeights3(v1, v2, v3, target *Vector3) (Scalar, Scalar, Scalar) {
 	// most of this can be cached when finding weights inside the same triangle TODO
+	// calculate vectors from point f to vertices p1, p2 and p3:
+	f1 := v1.Sub(*target)
+	f2 := v2.Sub(*target)
+	f3 := v3.Sub(*target)
+	// calculate the areas and factors (order of parameters doesn't matter):
+	var a = Vector3.Cross(v1.Sub(*v2), v1.Sub(*v3)).Length() // main triangle area a
+	var a1 = Vector3.Cross(f2, f3).Length() / a              // p1's triangle area / a
+	var a2 = Vector3.Cross(f3, f1).Length() / a              // p2's triangle area / a
+	var a3 = Vector3.Cross(f1, f2).Length() / a              // p3's triangle area / a
+	return a1, a2, a3
+}
+
+func FindWeights2D(v1, v2, v3, target *Vector3) (Scalar, Scalar, Scalar) {
+	// most of this can be cached when finding weights inside the same triangle TODO
 	den := (v2.Y-v3.Y)*(v1.X-v3.X) + (v3.X-v2.X)*(v1.Y-v3.Y)
 	t1 := target.X - v3.X
 	t2 := target.Y - v3.Y

@@ -44,6 +44,7 @@ func main() {
 		}()*/
 	run()
 	//testWireFrame()
+	//testClipping()
 }
 
 func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img []graphics.RGB) {
@@ -56,6 +57,85 @@ func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img []gra
 
 	window.SwapBuffers()
 	glfw.PollEvents()
+}
+
+func testClipping() {
+	sceneGraph := setupClipping()
+	var objRenderer = renderer.NewRasterRenderer(sceneGraph.GetNode("camera"), 1, winWidth, winHeight)
+
+	err := glfw.Init()
+	if err != nil {
+		panic(err)
+	}
+	defer glfw.Terminate()
+
+	window, err := glfw.CreateWindow(winWidth, winHeight, "My Window", nil, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	window.MakeContextCurrent()
+
+	err = gl.Init()
+	if err != nil {
+		panic(err)
+	}
+
+	var texture uint32
+	{
+		gl.GenTextures(1, &texture)
+
+		gl.BindTexture(gl.TEXTURE_2D, texture)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+
+		gl.BindImageTexture(0, texture, 0, false, 0, gl.WRITE_ONLY, gl.RGBA8)
+	}
+
+	var framebuffer uint32
+	{
+		gl.GenFramebuffers(1, &framebuffer)
+		gl.BindFramebuffer(gl.FRAMEBUFFER, framebuffer)
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
+
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, framebuffer)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
+	}
+
+	var imageBuffer *graphics.ImageBuffer
+	var frames int = 1
+	var startTime time.Time = time.Now()
+	var elapsed time.Duration
+	var elapsedSum time.Duration
+	camera := sceneGraph.GetNode("camera")
+	if camera == nil {
+		panic("camera not found in scene graph")
+	}
+
+	for !window.ShouldClose() {
+		elapsed = time.Since(startTime)
+		elapsedSum += elapsed
+
+		if frames%20 == 0 && elapsed.Milliseconds() != 0 {
+			fmt.Printf("avg ms: %v \n", elapsedSum.Milliseconds()/int64(frames))
+			elapsedSum = 0
+			frames = 0
+		}
+		startTime = time.Now()
+		frames++
+
+		imageBuffer = objRenderer.RenderSceneGraphWireFrame(&sceneGraph)
+
+		var w, h = window.GetSize()
+
+		img := imageBuffer.GetImage()
+		oGLUpdateFrame(window, texture, w, h, img)
+		inputHandler(window, camera)
+
+		imageBuffer.Clear()
+	}
 }
 
 func testWireFrame() {
@@ -433,6 +513,37 @@ func setupOnlyCube() entities.SceneGraph {
 	cubeObj := entities.NewModelObject("cubeObj", meshes["cube"], true, specularExp, false)
 
 	sceneGraph.AddChild("world", entities.NewSceneGraphNode(cubeObj, "cube"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(0, 0, 0)))
+
+	return sceneGraph
+}
+
+func setupClipping() entities.SceneGraph {
+	var specularExp basics.Scalar = 20
+
+	sceneGraph := entities.NewSceneGraph()
+
+	meshes := loadMeshes()
+
+	cameraObj := entities.NewCameraObject(
+		"mainCamera",
+	)
+	rotateCameraT := basics.NewTransform(1, basics.NewQuaternionFromEulerAngles(-20, -30, 0), basics.Vector3{})
+	sceneGraph.AddChild("world", entities.NewSceneGraphNode(cameraObj, "camera"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(-1.5, 3, -3)))
+	cameraNode := sceneGraph.GetNode("camera")
+	cameraNode.CumulateWorldTransform(&rotateCameraT)
+
+	planeObj := entities.NewModelObject("planeObj", meshes["quad"], true, specularExp, true)
+
+	sceneGraph.AddChild("world", entities.NewSceneGraphNode(planeObj, "plane"), basics.NewTransform(10, basics.NewQuaternionFromEulerAngles(0, 90, 0), basics.NewVector3(0, 0, 10)))
+
+	// Lighting
+	simpleFallOff := func(lightDistance basics.Scalar) basics.Scalar {
+		return basics.Clamp(0, 1, 1-(lightDistance/basics.Scalar(50)))
+	}
+	_ = simpleFallOff
+
+	sceneGraph.AddChild("world", entities.NewSceneGraphNode(entities.NewLightObject("light1", color.RGBA{150, 150, 150, 255}, simpleFallOff), "ligh1"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(0, 5, 0)))
+	sceneGraph.AddChild("world", entities.NewSceneGraphNode(entities.NewLightObject("light2", color.RGBA{80, 150, 20, 255}, simpleFallOff), "ligh2"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(2, 2, 2)))
 
 	return sceneGraph
 }
