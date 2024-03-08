@@ -23,21 +23,36 @@ func (r *RasterRender) renderSingleItemWireFrame(item renderItem) {
 	iterator := mesh.Iterator()
 	var t graphics.Triangle
 	for iterator.HasNext() {
+
 		// Translate triangle in view space
 		t = iterator.Next()
 		t.ThisApplyTransformation(&item.completeTransform)
 
-		for i := 0; i < 3; i++ {
-			p0, p1, notCulled := clipLineAgainstFrustum(t[i].Position, t[(i+1)%3].Position, &r.parameters.viewFrustumSides)
+		triangles := ClipTriangleAgainsPlanes(&t, r.parameters.viewFrustumSides)
 
-			if notCulled {
-				p0 = projectPointOnViewPlane(&p0)
-				p1 = projectPointOnViewPlane(&p1)
+		//fmt.Println("tris to draw: ", triangles)
+		for _, triangle := range triangles {
+
+			for i := 0; i < 3; i++ {
+				p0 := projectPointOnViewPlane(&triangle[i].Position)
+				p1 := projectPointOnViewPlane(&triangle[(i+1)%3].Position)
 				scalePointOnScreen(&p0.X, &p0.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
 				scalePointOnScreen(&p1.X, &p1.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
 				drawLine(&p0, &p1, &r.imageBuffer, &r.zBuffer)
 			}
 		}
+		/*
+			for i := 0; i < 3; i++ {
+				p0, p1, notCulled := clipLineAgainstFrustum(t[i].Position, t[(i+1)%3].Position, &r.parameters.viewFrustumSides)
+
+				if notCulled {
+					p0 = projectPointOnViewPlane(&p0)
+					p1 = projectPointOnViewPlane(&p1)
+					scalePointOnScreen(&p0.X, &p0.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+					scalePointOnScreen(&p1.X, &p1.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+					drawLine(&p0, &p1, &r.imageBuffer, &r.zBuffer)
+				}
+			}*/
 	}
 }
 

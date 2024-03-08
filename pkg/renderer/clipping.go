@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/tsagae/software3d/pkg/basics"
 	"github.com/tsagae/software3d/pkg/graphics"
+	"math"
 )
 
 // FindIntersectionPoint return the point where the plane intersects the segment and true if there is one or if one of them is coplanar, false if it's not found, they're the same point. Returns also the 2 tests against the plane for the 2 points
@@ -83,6 +84,7 @@ func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
 		buffer = append(buffer, *t)
 		return buffer
 	case 3:
+		//fmt.Printf("triangle: %v %v %v is discarded against plane %v\n", t[0].Position, t[1].Position, t[2].Position, *p)
 		return buffer
 	}
 
@@ -97,6 +99,14 @@ func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
 		} else {
 			inters, _, _, _ := FindIntersectionPoint(&v1.vertex.Position, &v2.vertex.Position, p)
 			interp := t.InterpolateVertexProps(t.FindWeightsPosition(&inters))
+
+			if math.IsNaN(float64(inters.X)) || math.IsNaN(float64(inters.Y)) || math.IsNaN(float64(inters.Z)) {
+				fmt.Println("error in inters")
+			}
+			if math.IsNaN(float64(interp.Position.X)) || math.IsNaN(float64(interp.Position.Y)) || math.IsNaN(float64(interp.Position.Z)) {
+				fmt.Println("error in interp")
+			}
+
 			if !v1.behindPlane {
 				newVertices = append(newVertices, interp)
 			} else {
@@ -121,7 +131,7 @@ func ClipTriangleAgainsPlanes(triangle *graphics.Triangle, planes []basics.Plane
 	if len(planes) == 0 {
 		return []graphics.Triangle{*triangle}
 	}
-	outTriangles := make([]graphics.Triangle, 0, 1)
+	outTriangles := make([]graphics.Triangle, 0)
 	triangles := ClipTriangle(triangle, &planes[0])
 	for _, t := range triangles {
 		outTriangles = append(outTriangles, ClipTriangleAgainsPlanes(&t, planes[1:])...)
