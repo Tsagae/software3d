@@ -63,8 +63,6 @@ func ClipSegment(p0, p1 *basics.Vector3, plane *basics.Plane) (basics.Vector3, b
 
 // ClipTriangle fills the buffer with the triangles created by clipping t and returns it. The triangles are not appended in the buffer but are inserted from the beginning of the slice
 func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
-	//fmt.Println("in:", t[0].Position, t[1].Position, t[2].Position, "plane: ", p)
-
 	buffer := make([]graphics.Triangle, 0)
 	type vert struct {
 		vertex      graphics.Vertex
@@ -85,10 +83,11 @@ func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
 		buffer = append(buffer, *t)
 		return buffer
 	case 3:
-		//fmt.Printf("triangle: %v %v %v is discarded against plane %v\n", t[0].Position, t[1].Position, t[2].Position, *p)
 		return buffer
 	}
 
+	var invalidVertices [4]bool
+	foundNan := false
 	newVertices := make([]graphics.Vertex, 0, 3)
 	for i := 0; i < 3; i++ {
 		v1 := vertices[i]
@@ -102,7 +101,13 @@ func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
 			if !foundOrCoplanar {
 				return buffer
 			}
+
 			w0, w1, w2 := t.FindWeightsPosition(&inters)
+			if w0.IsNaN() || w1.IsNaN() || w2.IsNaN() {
+				invalidVertices[i] = true
+				foundNan = true
+			}
+
 			interp := t.InterpolateVertexProps(w0, w1, w2)
 
 			if !v1.behindPlane {
@@ -112,70 +117,43 @@ func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
 			}
 		}
 	}
+
 	if !(len(newVertices) == 3 || len(newVertices) == 4) {
-		panic(fmt.Sprintf("Triangle clipping produced a polygon with %d vertices", len(newVertices)))
+		panic(fmt.Sprintf("Triangle clipping produced a polygon with %d vertices", len(newVertices))) //assertion
 	}
-	foundNan := false
-	if len(newVertices) == 3 {
-		for _, vertex := range newVertices {
-			if vertex.Position.X.IsNaN() || vertex.Position.Y.IsNaN() || vertex.Position.Z.IsNaN() {
-				foundNan = true
-				break
+
+	if !foundNan {
+		if len(newVertices) == 3 {
+			buffer = append(buffer, [3]graphics.Vertex(newVertices))
+		} else {
+			buffer = append(buffer, [3]graphics.Vertex(newVertices[:3]), [3]graphics.Vertex{newVertices[2], newVertices[3], newVertices[0]})
+		}
+	} else {
+		if len(newVertices) == 3 {
+			if !(invalidVertices[0] || invalidVertices[1] || invalidVertices[2]) {
+				buffer = append(buffer, [3]graphics.Vertex(newVertices))
+			}
+		} else {
+			if !(invalidVertices[0] || invalidVertices[1] || invalidVertices[2]) {
+				buffer = append(buffer, [3]graphics.Vertex(newVertices[:3]))
+			}
+			if !(invalidVertices[1] || invalidVertices[2] || invalidVertices[3]) {
+				buffer = append(buffer, [3]graphics.Vertex(newVertices[:3]))
 			}
 		}
-		if !foundNan {
-			buffer = append(buffer, [3]graphics.Vertex(newVertices))
-		}
-		return buffer
 	}
 
-	foundNan = false
-	for _, vertex := range [3]graphics.Vertex(newVertices[:3]) {
-		if vertex.Position.X.IsNaN() || vertex.Position.Y.IsNaN() || vertex.Position.Z.IsNaN() {
-			foundNan = true
-			break
-		}
-	}
-	if !foundNan {
-		buffer = append(buffer, [3]graphics.Vertex(newVertices[:3]))
-	}
-
-	foundNan = false
-	v2 := [3]graphics.Vertex{newVertices[2], newVertices[3], newVertices[0]}
-	for _, vertex := range v2 {
-		if vertex.Position.X.IsNaN() || vertex.Position.Y.IsNaN() || vertex.Position.Z.IsNaN() {
-			foundNan = true
-			break
-		}
-	}
-	if !foundNan {
-		buffer = append(buffer, v2)
-	}
 	return buffer
 }
 
-func ClipTriangleAgainsPlanes(triangle *graphics.Triangle, planes []basics.Plane) []graphics.Triangle {
+func ClipTriangleAgainstPlanes(triangle *graphics.Triangle, planes []basics.Plane) []graphics.Triangle {
 	if len(planes) == 0 {
 		return []graphics.Triangle{*triangle}
 	}
 	outTriangles := make([]graphics.Triangle, 0)
 	triangles := ClipTriangle(triangle, &planes[0])
-	/*
-		for i, t := range triangles {
-			for j, vertex := range t {
-				if math.IsNaN(float64(vertex.Position.X)) ||
-					math.IsNaN(float64(vertex.Position.Y)) ||
-					math.IsNaN(float64(vertex.Position.Z)) {
-					fmt.Println("out triangle num:", i, "vertex num: ", j)
-					fmt.Println("tri pos:", t[0].Position, t[1].Position, t[2].Position)
-					panic("NaN after clipping")
-				}
-			}
-		}
-	*/
-
 	for _, t := range triangles {
-		outTriangles = append(outTriangles, ClipTriangleAgainsPlanes(&t, planes[1:])...)
+		outTriangles = append(outTriangles, ClipTriangleAgainstPlanes(&t, planes[1:])...)
 	}
 	return outTriangles
 }
