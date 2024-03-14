@@ -157,7 +157,7 @@ func run(renderMode uint8, loop func(graph *entities.SceneGraph), sceneGraph *en
 	return 0
 }
 
-func inputHandler(window *glfw.Window, camera *entities.SceneGraphNode, r *renderer.RasterRender) {
+func inputHandler(window *glfw.Window, camera *entities.SceneGraphNode, r *renderer.RasterRenderer) {
 	cameraDir := camera.Orientation()
 	cameraDir[2].Y = 0
 	cameraDir[2] = cameraDir[2].Normalized()

@@ -154,7 +154,7 @@ func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
 	return buffer
 }
 
-func ClipTriangleAgainsPlanes(triangle *graphics.Triangle, planes []basics.Plane) []graphics.Triangle {
+func ClipTriangleAgainstPlanes(triangle *graphics.Triangle, planes []basics.Plane) []graphics.Triangle {
 	if len(planes) == 0 {
 		return []graphics.Triangle{*triangle}
 	}
@@ -175,7 +175,7 @@ func ClipTriangleAgainsPlanes(triangle *graphics.Triangle, planes []basics.Plane
 	*/
 
 	for _, t := range triangles {
-		outTriangles = append(outTriangles, ClipTriangleAgainsPlanes(&t, planes[1:])...)
+		outTriangles = append(outTriangles, ClipTriangleAgainstPlanes(&t, planes[1:])...)
 	}
 	return outTriangles
 }

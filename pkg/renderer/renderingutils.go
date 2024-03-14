@@ -12,8 +12,8 @@ const (
 	RendermodeWireframe
 )
 
-// RendererParameters Near clip plane is always assumed to be at (0,0,1) looking at (0,0,1)
-type RendererParameters struct {
+// Parameters Near clip plane is always assumed to be at (0,0,1) looking at (0,0,1)
+type Parameters struct {
 	camera                 *entities.SceneGraphNode
 	planeZ                 basics.Scalar
 	winWidth               int

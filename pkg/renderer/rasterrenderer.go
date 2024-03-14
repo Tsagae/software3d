@@ -6,17 +6,17 @@ import (
 	"github.com/tsagae/software3d/pkg/graphics"
 )
 
-type RasterRender struct {
-	parameters  RendererParameters
+type RasterRenderer struct {
+	parameters  Parameters
 	zBuffer     graphics.ZBuffer
 	imageBuffer graphics.ImageBuffer
 }
 
-func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, winWidth int, winHeight int) *RasterRender {
+func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, winWidth int, winHeight int) *RasterRenderer {
 	inverseCameraT := camera.WorldTransform()
 	inverseCameraT.ThisInvert()
-	return &RasterRender{
-		parameters: RendererParameters{
+	return &RasterRenderer{
+		parameters: Parameters{
 			camera:                 camera,
 			planeZ:                 planeZ,
 			winWidth:               winWidth,
@@ -33,11 +33,11 @@ func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, wi
 	}
 }
 
-func (r *RasterRender) SetRenderMode(renderMode uint8) {
+func (r *RasterRenderer) SetRenderMode(renderMode uint8) {
 	r.parameters.renderMode = renderMode
 }
 
-func (r *RasterRender) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphics.ImageBuffer {
+func (r *RasterRenderer) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphics.ImageBuffer {
 	inverseCameraT := sceneGraph.GetNode("camera").WorldTransform()
 	inverseCameraT.ThisInvert()
 	itemsToRender, lightsToRender := getAllItemsToRender(sceneGraph, &inverseCameraT)
@@ -56,7 +56,7 @@ func (r *RasterRender) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphi
 	return &r.imageBuffer
 }
 
-func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
+func (r *RasterRenderer) renderSingleItem(item renderItem, lights []renderLight) {
 	mesh := item.modelObject.Mesh()
 	iterator := mesh.Iterator()
 
@@ -77,7 +77,7 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 		t = nextFunc()
 		t.ThisApplyTransformation(&item.completeTransform)
 
-		triangles := ClipTriangleAgainsPlanes(&t, r.parameters.viewFrustumSides)
+		triangles := ClipTriangleAgainstPlanes(&t, r.parameters.viewFrustumSides)
 
 		for _, t := range triangles {
 			for _, vertex := range t {
@@ -105,7 +105,7 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 	}
 }
 
-func (r *RasterRender) renderSingleItemWireFrame(item renderItem) {
+func (r *RasterRenderer) renderSingleItemWireFrame(item renderItem) {
 	mesh := item.modelObject.Mesh()
 	iterator := mesh.Iterator()
 	var t graphics.Triangle
@@ -115,7 +115,7 @@ func (r *RasterRender) renderSingleItemWireFrame(item renderItem) {
 		t = iterator.Next()
 		t.ThisApplyTransformation(&item.completeTransform)
 
-		triangles := ClipTriangleAgainsPlanes(&t, r.parameters.viewFrustumSides)
+		triangles := ClipTriangleAgainstPlanes(&t, r.parameters.viewFrustumSides)
 
 		for _, triangle := range triangles {
 
