@@ -150,14 +150,14 @@ func run(renderMode uint8, loop func(graph *entities.SceneGraph), sceneGraph *en
 		*/
 		// -------------------------
 		oGLUpdateFrame(window, texture, w, h, img)
-		inputHandler(window, camera)
+		inputHandler(window, camera, objRenderer)
 
 		imageBuffer.Clear()
 	}
 	return 0
 }
 
-func inputHandler(window *glfw.Window, camera *entities.SceneGraphNode) {
+func inputHandler(window *glfw.Window, camera *entities.SceneGraphNode, r *renderer.RasterRender) {
 	cameraDir := camera.Orientation()
 	cameraDir[2].Y = 0
 	cameraDir[2] = cameraDir[2].Normalized()
@@ -198,6 +198,13 @@ func inputHandler(window *glfw.Window, camera *entities.SceneGraphNode) {
 	}
 	if window.GetKey(glfw.KeyLeft) == glfw.Press {
 		cameraYaw -= 1
+	}
+	// Misc
+	if window.GetKey(glfw.Key1) == glfw.Press {
+		r.SetRenderMode(renderer.RendermodeNormal)
+	}
+	if window.GetKey(glfw.Key2) == glfw.Press {
+		r.SetRenderMode(renderer.RendermodeWireframe)
 	}
 	cameraPitch = basics.Clamp(-89, 89, cameraPitch)
 	camera.SetViewRotation(cameraYaw, cameraPitch)
