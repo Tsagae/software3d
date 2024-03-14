@@ -105,6 +105,31 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 	}
 }
 
+func (r *RasterRender) renderSingleItemWireFrame(item renderItem) {
+	mesh := item.modelObject.Mesh()
+	iterator := mesh.Iterator()
+	var t graphics.Triangle
+	for iterator.HasNext() {
+
+		// Translate triangle in view space
+		t = iterator.Next()
+		t.ThisApplyTransformation(&item.completeTransform)
+
+		triangles := ClipTriangleAgainsPlanes(&t, r.parameters.viewFrustumSides)
+
+		for _, triangle := range triangles {
+
+			for i := 0; i < 3; i++ {
+				p0 := projectPointOnViewPlane(&triangle[i].Position)
+				p1 := projectPointOnViewPlane(&triangle[(i+1)%3].Position)
+				scalePointOnScreen(&p0.X, &p0.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+				scalePointOnScreen(&p1.X, &p1.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
+				drawLine(&p0, &p1, &r.imageBuffer)
+			}
+		}
+	}
+}
+
 func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffer *graphics.ImageBuffer, zBuffer *graphics.ZBuffer) {
 	// Bounding box
 	maxX, minX, maxY, minY := getMaxMin(t[0].Position, t[1].Position, t[2].Position)
