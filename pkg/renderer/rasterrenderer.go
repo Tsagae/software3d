@@ -26,10 +26,15 @@ func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, wi
 			hh:                     basics.Scalar(winHeight) / 2,
 			inverseCameraTransform: inverseCameraT,
 			viewFrustumSides:       getViewFrustumSides(basics.Scalar(winWidth) / basics.Scalar(winHeight)),
+			renderMode:             RendermodeNormal,
 		},
 		zBuffer:     graphics.NewZBuffer(winWidth, winHeight),
 		imageBuffer: graphics.NewImageBuffer(winWidth, winHeight),
 	}
+}
+
+func (r *RasterRender) SetRenderMode(renderMode uint8) {
+	r.parameters.renderMode = renderMode
 }
 
 func (r *RasterRender) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphics.ImageBuffer {
@@ -38,7 +43,14 @@ func (r *RasterRender) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphi
 	itemsToRender, lightsToRender := getAllItemsToRender(sceneGraph, &inverseCameraT)
 
 	for _, item := range itemsToRender {
-		r.renderSingleItem(item, lightsToRender)
+		switch r.parameters.renderMode {
+		case RendermodeNormal:
+			r.renderSingleItem(item, lightsToRender)
+		case RendermodeWireframe:
+			r.renderSingleItemWireFrame(item)
+		default:
+			panic("invalid Rendermode")
+		}
 	}
 	r.zBuffer.Clear()
 	return &r.imageBuffer

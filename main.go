@@ -43,7 +43,7 @@ func main() {
 			http.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 			http.HandleFunc("/debug/pprof/trace", pprof.Trace)
 		}()*/
-	run()
+	run(renderer.RendermodeNormal, mainLoop)
 	//testWireFrame()
 	//testClipping()
 }
@@ -127,7 +127,7 @@ func testClipping() {
 		startTime = time.Now()
 		frames++
 
-		imageBuffer = objRenderer.RenderSceneGraphWireFrame(&sceneGraph)
+		imageBuffer = objRenderer.RenderSceneGraphWireFrame(sceneGraph)
 
 		var w, h = window.GetSize()
 
@@ -206,7 +206,7 @@ func testWireFrame() {
 		startTime = time.Now()
 		frames++
 
-		imageBuffer = objRenderer.RenderSceneGraphWireFrame(&sceneGraph)
+		imageBuffer = objRenderer.RenderSceneGraphWireFrame(sceneGraph)
 
 		var w, h = window.GetSize()
 
@@ -218,16 +218,7 @@ func testWireFrame() {
 	}
 }
 
-func run() int {
-
-	sceneGraph := setup()
-	var objRenderer = renderer.NewRasterRenderer(sceneGraph.GetNode("camera"), 1, winWidth, winHeight)
-
-	//renderRGBAxis(1, objRenderer, false)
-	//renderer.DrawString(16, 16, fmt.Sprintf("FPS %.0f", displayFps), basics.Color{R: 0, G: 255, B: 0, A: 255})
-	//renderer.DrawString(16, 25, fmt.Sprintf("ms %v", displayDelta), basics.Color{R: 0, G: 255, B: 0, A: 255})
-	//objRenderer.RenderSceneGraph(&sceneGraph)
-
+func run(renderMode uint8, loop func(graph *entities.SceneGraph)) int {
 	err := glfw.Init()
 	if err != nil {
 		panic(err)
@@ -269,6 +260,9 @@ func run() int {
 		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
 	}
 
+	sceneGraph := setup()
+	var objRenderer = renderer.NewRasterRenderer(sceneGraph.GetNode("camera"), 1, winWidth, winHeight)
+
 	var imageBuffer *graphics.ImageBuffer
 	var frames int = 1
 	var startTime time.Time = time.Now()
@@ -292,10 +286,8 @@ func run() int {
 		startTime = time.Now()
 		frames++
 
-		imageBuffer = objRenderer.RenderSceneGraph(&sceneGraph)
-		//sg := entities.NewSceneGraph()
-		//imageBuffer = objRenderer.RenderSceneGraph(&sg)
-		mainLoop(sceneGraph)
+		imageBuffer = objRenderer.RenderSceneGraph(sceneGraph)
+		loop(sceneGraph)
 
 		var w, h = window.GetSize()
 
@@ -370,7 +362,7 @@ func inputHandler(window *glfw.Window, camera *entities.SceneGraphNode) {
 	camera.CumulateWorldTransform(&movement)
 }
 
-func mainLoop(sceneGraph entities.SceneGraph) {
+func mainLoop(sceneGraph *entities.SceneGraph) {
 	yRotationTransformation := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(0.3, basics.Up()), basics.NewVector3(0, 0, 0))
 	xRot := basics.NewTransform(1, basics.NewQuaternionFromAngleAndAxis(1, basics.Right()), basics.Vector3{})
 	torusNode := sceneGraph.GetNode("torus")
@@ -433,7 +425,7 @@ func loadMeshes() map[string]graphics.Mesh {
 	return meshes
 }
 
-func setup() entities.SceneGraph {
+func setup() *entities.SceneGraph {
 	var specularExp basics.Scalar = 600
 
 	sceneGraph := entities.NewSceneGraph()
@@ -497,7 +489,7 @@ func setup() entities.SceneGraph {
 	return sceneGraph
 }
 
-func setupOnlyCube() entities.SceneGraph {
+func setupOnlyCube() *entities.SceneGraph {
 	var specularExp basics.Scalar = 20
 
 	sceneGraph := entities.NewSceneGraph()
@@ -518,7 +510,7 @@ func setupOnlyCube() entities.SceneGraph {
 	return sceneGraph
 }
 
-func setupClipping() entities.SceneGraph {
+func setupClipping() *entities.SceneGraph {
 	var specularExp basics.Scalar = 20
 
 	sceneGraph := entities.NewSceneGraph()

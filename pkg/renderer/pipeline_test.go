@@ -63,7 +63,7 @@ func SampleScene() *entities.SceneGraph {
 	if err != nil {
 		panic(err)
 	}
-	return &sceneGraph
+	return sceneGraph
 }
 
 func BenchmarkSampleScene(b *testing.B) {

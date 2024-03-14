@@ -22,7 +22,7 @@ type SceneGraphNode struct {
 	//caching world transform and a bool to refresh it ?
 }
 
-func NewSceneGraph() SceneGraph {
+func NewSceneGraph() *SceneGraph {
 	worldNode := newWorldNode()
 	nodes := make(map[string]*SceneGraphNode)
 	sceneGraph := SceneGraph{
@@ -30,7 +30,7 @@ func NewSceneGraph() SceneGraph {
 		nodes: nodes,
 	}
 	nodes[worldNode.nodeName] = worldNode
-	return sceneGraph
+	return &sceneGraph
 }
 
 // AddChild Adds a child provided the name of the parent. Returns an error if a node with the same name already exists or the parent node does not exist

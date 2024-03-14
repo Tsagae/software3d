@@ -7,6 +7,11 @@ import (
 	"image/color"
 )
 
+const (
+	RendermodeNormal = iota
+	RendermodeWireframe
+)
+
 // RendererParameters Near clip plane is always assumed to be at (0,0,1) looking at (0,0,1)
 type RendererParameters struct {
 	camera                 *entities.SceneGraphNode
@@ -18,6 +23,7 @@ type RendererParameters struct {
 	hh                     basics.Scalar
 	inverseCameraTransform basics.Transform
 	viewFrustumSides       []basics.Plane
+	renderMode             uint8
 }
 
 type renderItem struct {
