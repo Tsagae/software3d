@@ -43,9 +43,9 @@ func main() {
 			http.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 			http.HandleFunc("/debug/pprof/trace", pprof.Trace)
 		}()*/
-	run(renderer.RendermodeNormal, mainLoop)
-	//testWireFrame()
-	//testClipping()
+	run(renderer.RendermodeNormal, mainLoop, setup())
+	//run(renderer.RendermodeWireframe, func(graph *entities.SceneGraph) {}, setupOnlyCube())
+	//run(renderer.RendermodeWireframe, func(graph *entities.SceneGraph) {}, setupClipping())
 }
 
 func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img []graphics.RGB) {
@@ -60,10 +60,7 @@ func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img []gra
 	glfw.PollEvents()
 }
 
-func testClipping() {
-	sceneGraph := setupClipping()
-	var objRenderer = renderer.NewRasterRenderer(sceneGraph.GetNode("camera"), 1, winWidth, winHeight)
-
+func run(renderMode uint8, loop func(graph *entities.SceneGraph), sceneGraph *entities.SceneGraph) int {
 	err := glfw.Init()
 	if err != nil {
 		panic(err)
@@ -105,163 +102,8 @@ func testClipping() {
 		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
 	}
 
-	var imageBuffer *graphics.ImageBuffer
-	var frames int = 1
-	var startTime time.Time = time.Now()
-	var elapsed time.Duration
-	var elapsedSum time.Duration
-	camera := sceneGraph.GetNode("camera")
-	if camera == nil {
-		panic("camera not found in scene graph")
-	}
-
-	for !window.ShouldClose() {
-		elapsed = time.Since(startTime)
-		elapsedSum += elapsed
-
-		if frames%20 == 0 && elapsed.Milliseconds() != 0 {
-			fmt.Printf("avg ms: %v \n", elapsedSum.Milliseconds()/int64(frames))
-			elapsedSum = 0
-			frames = 0
-		}
-		startTime = time.Now()
-		frames++
-
-		imageBuffer = objRenderer.RenderSceneGraphWireFrame(sceneGraph)
-
-		var w, h = window.GetSize()
-
-		img := imageBuffer.GetImage()
-		oGLUpdateFrame(window, texture, w, h, img)
-		inputHandler(window, camera)
-
-		imageBuffer.Clear()
-	}
-}
-
-func testWireFrame() {
-	sceneGraph := setupOnlyCube()
 	var objRenderer = renderer.NewRasterRenderer(sceneGraph.GetNode("camera"), 1, winWidth, winHeight)
-
-	err := glfw.Init()
-	if err != nil {
-		panic(err)
-	}
-	defer glfw.Terminate()
-
-	window, err := glfw.CreateWindow(winWidth, winHeight, windowTitle, nil, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	window.MakeContextCurrent()
-
-	err = gl.Init()
-	if err != nil {
-		panic(err)
-	}
-
-	var texture uint32
-	{
-		gl.GenTextures(1, &texture)
-
-		gl.BindTexture(gl.TEXTURE_2D, texture)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-
-		gl.BindImageTexture(0, texture, 0, false, 0, gl.WRITE_ONLY, gl.RGBA8)
-	}
-
-	var framebuffer uint32
-	{
-		gl.GenFramebuffers(1, &framebuffer)
-		gl.BindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-
-		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, framebuffer)
-		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
-	}
-
-	var imageBuffer *graphics.ImageBuffer
-	var frames int = 1
-	var startTime time.Time = time.Now()
-	var elapsed time.Duration
-	var elapsedSum time.Duration
-	camera := sceneGraph.GetNode("camera")
-	if camera == nil {
-		panic("camera not found in scene graph")
-	}
-
-	for !window.ShouldClose() {
-		elapsed = time.Since(startTime)
-		elapsedSum += elapsed
-
-		if frames%20 == 0 && elapsed.Milliseconds() != 0 {
-			fmt.Printf("avg ms: %v \n", elapsedSum.Milliseconds()/int64(frames))
-			elapsedSum = 0
-			frames = 0
-		}
-		startTime = time.Now()
-		frames++
-
-		imageBuffer = objRenderer.RenderSceneGraphWireFrame(sceneGraph)
-
-		var w, h = window.GetSize()
-
-		img := imageBuffer.GetImage()
-		oGLUpdateFrame(window, texture, w, h, img)
-		inputHandler(window, camera)
-
-		imageBuffer.Clear()
-	}
-}
-
-func run(renderMode uint8, loop func(graph *entities.SceneGraph)) int {
-	err := glfw.Init()
-	if err != nil {
-		panic(err)
-	}
-	defer glfw.Terminate()
-
-	window, err := glfw.CreateWindow(winWidth, winHeight, windowTitle, nil, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	window.MakeContextCurrent()
-
-	err = gl.Init()
-	if err != nil {
-		panic(err)
-	}
-
-	var texture uint32
-	{
-		gl.GenTextures(1, &texture)
-
-		gl.BindTexture(gl.TEXTURE_2D, texture)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-
-		gl.BindImageTexture(0, texture, 0, false, 0, gl.WRITE_ONLY, gl.RGBA8)
-	}
-
-	var framebuffer uint32
-	{
-		gl.GenFramebuffers(1, &framebuffer)
-		gl.BindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-
-		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, framebuffer)
-		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
-	}
-
-	sceneGraph := setup()
-	var objRenderer = renderer.NewRasterRenderer(sceneGraph.GetNode("camera"), 1, winWidth, winHeight)
+	objRenderer.SetRenderMode(renderMode)
 
 	var imageBuffer *graphics.ImageBuffer
 	var frames int = 1
