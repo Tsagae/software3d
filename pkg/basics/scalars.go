@@ -14,3 +14,7 @@ func (a Scalar) IsZero() bool {
 func (a Scalar) Equals(b Scalar) bool {
 	return (a - b).IsZero()
 }
+
+func (a Scalar) IsNaN() bool {
+	return math.IsNaN(float64(a))
+}

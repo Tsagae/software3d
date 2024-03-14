@@ -434,7 +434,7 @@ func loadMeshes() map[string]graphics.Mesh {
 }
 
 func setup() entities.SceneGraph {
-	var specularExp basics.Scalar = 20
+	var specularExp basics.Scalar = 600
 
 	sceneGraph := entities.NewSceneGraph()
 

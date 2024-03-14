@@ -1,9 +1,11 @@
 package renderer
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/tsagae/software3d/pkg/basics"
 	"github.com/tsagae/software3d/pkg/graphics"
+	"math"
 	"testing"
 )
 
@@ -204,4 +206,29 @@ func TestClipTriangle2Sides(t *testing.T) {
 	assert.Equal(t, 2, len(buffer))
 	assert.Equal(t, expected, buffer[0])
 	assert.Equal(t, expectedSecond, buffer[1])
+}
+
+// tPos : {8.000000000000002 -3.000000000000001 3} {8.000000000000002 -3.000000000000001 3} {8.000000000000002 -8.000000000000002 8}
+// plane &{{1.3333333333333333 -1 1} {-0.6 0 0.7999999999999999}}
+func TestClipTriangleNan(t *testing.T) {
+	tri := graphics.Triangle{
+		{Position: basics.Vector3{8, -3, 3}},
+		{Position: basics.Vector3{8, -3, 3}},
+		{Position: basics.Vector3{8, -8, 8}},
+	}
+	point := basics.Vector3{1.3333333333333333, -1, 1}
+	normal := basics.Vector3{-0.6, 0, 0.8}
+	plane := basics.NewPlaneFromPointNormal(&point, &normal)
+
+	result := ClipTriangle(&tri, &plane)
+	for _, triangle := range result {
+		for _, vertex := range triangle {
+			fmt.Println(vertex.Position)
+			assert.False(t, math.IsNaN(float64(vertex.Position.X)) ||
+				math.IsNaN(float64(vertex.Position.Y)) ||
+				math.IsNaN(float64(vertex.Position.Z)),
+				"vertex position component is NaN")
+		}
+
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/tsagae/software3d/pkg/basics"
 	"github.com/tsagae/software3d/pkg/graphics"
-	"math"
 )
 
 // FindIntersectionPoint return the point where the plane intersects the segment and true if there is one or if one of them is coplanar, false if it's not found, they're the same point. Returns also the 2 tests against the plane for the 2 points
@@ -64,7 +63,9 @@ func ClipSegment(p0, p1 *basics.Vector3, plane *basics.Plane) (basics.Vector3, b
 
 // ClipTriangle fills the buffer with the triangles created by clipping t and returns it. The triangles are not appended in the buffer but are inserted from the beginning of the slice
 func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
-	buffer := make([]graphics.Triangle, 0, 3)
+	//fmt.Println("in:", t[0].Position, t[1].Position, t[2].Position, "plane: ", p)
+
+	buffer := make([]graphics.Triangle, 0)
 	type vert struct {
 		vertex      graphics.Vertex
 		behindPlane bool
@@ -97,15 +98,12 @@ func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
 		} else if v1.behindPlane && v2.behindPlane {
 			//nothing
 		} else {
-			inters, _, _, _ := FindIntersectionPoint(&v1.vertex.Position, &v2.vertex.Position, p)
-			interp := t.InterpolateVertexProps(t.FindWeightsPosition(&inters))
-
-			if math.IsNaN(float64(inters.X)) || math.IsNaN(float64(inters.Y)) || math.IsNaN(float64(inters.Z)) {
-				fmt.Println("error in inters")
+			inters, foundOrCoplanar, _, _ := FindIntersectionPoint(&v1.vertex.Position, &v2.vertex.Position, p)
+			if !foundOrCoplanar {
+				return buffer
 			}
-			if math.IsNaN(float64(interp.Position.X)) || math.IsNaN(float64(interp.Position.Y)) || math.IsNaN(float64(interp.Position.Z)) {
-				fmt.Println("error in interp")
-			}
+			w0, w1, w2 := t.FindWeightsPosition(&inters)
+			interp := t.InterpolateVertexProps(w0, w1, w2)
 
 			if !v1.behindPlane {
 				newVertices = append(newVertices, interp)
@@ -117,13 +115,42 @@ func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
 	if !(len(newVertices) == 3 || len(newVertices) == 4) {
 		panic(fmt.Sprintf("Triangle clipping produced a polygon with %d vertices", len(newVertices)))
 	}
-
+	foundNan := false
 	if len(newVertices) == 3 {
-		buffer = append(buffer, [3]graphics.Vertex(newVertices))
+		for _, vertex := range newVertices {
+			if vertex.Position.X.IsNaN() || vertex.Position.Y.IsNaN() || vertex.Position.Z.IsNaN() {
+				foundNan = true
+				break
+			}
+		}
+		if !foundNan {
+			buffer = append(buffer, [3]graphics.Vertex(newVertices))
+		}
 		return buffer
 	}
 
-	buffer = append(buffer, [3]graphics.Vertex(newVertices[:3]), [3]graphics.Vertex{newVertices[2], newVertices[3], newVertices[0]})
+	foundNan = false
+	for _, vertex := range [3]graphics.Vertex(newVertices[:3]) {
+		if vertex.Position.X.IsNaN() || vertex.Position.Y.IsNaN() || vertex.Position.Z.IsNaN() {
+			foundNan = true
+			break
+		}
+	}
+	if !foundNan {
+		buffer = append(buffer, [3]graphics.Vertex(newVertices[:3]))
+	}
+
+	foundNan = false
+	v2 := [3]graphics.Vertex{newVertices[2], newVertices[3], newVertices[0]}
+	for _, vertex := range v2 {
+		if vertex.Position.X.IsNaN() || vertex.Position.Y.IsNaN() || vertex.Position.Z.IsNaN() {
+			foundNan = true
+			break
+		}
+	}
+	if !foundNan {
+		buffer = append(buffer, v2)
+	}
 	return buffer
 }
 
@@ -133,6 +160,20 @@ func ClipTriangleAgainsPlanes(triangle *graphics.Triangle, planes []basics.Plane
 	}
 	outTriangles := make([]graphics.Triangle, 0)
 	triangles := ClipTriangle(triangle, &planes[0])
+	/*
+		for i, t := range triangles {
+			for j, vertex := range t {
+				if math.IsNaN(float64(vertex.Position.X)) ||
+					math.IsNaN(float64(vertex.Position.Y)) ||
+					math.IsNaN(float64(vertex.Position.Z)) {
+					fmt.Println("out triangle num:", i, "vertex num: ", j)
+					fmt.Println("tri pos:", t[0].Position, t[1].Position, t[2].Position)
+					panic("NaN after clipping")
+				}
+			}
+		}
+	*/
+
 	for _, t := range triangles {
 		outTriangles = append(outTriangles, ClipTriangleAgainsPlanes(&t, planes[1:])...)
 	}

@@ -1,11 +1,9 @@
 package renderer
 
 import (
-	"fmt"
 	"github.com/tsagae/software3d/pkg/basics"
 	"github.com/tsagae/software3d/pkg/entities"
 	"github.com/tsagae/software3d/pkg/graphics"
-	"math"
 )
 
 type RasterRender struct {
@@ -60,18 +58,13 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 		}
 		t.ThisApplyTransformation(&item.completeTransform)
 
-		for _, vertex := range t {
-			if math.IsNaN(float64(vertex.Position.X)) || math.IsNaN(float64(vertex.Position.Y)) || math.IsNaN(float64(vertex.Position.Z)) {
-				fmt.Println("error before")
-			}
-		}
-
 		triangles := ClipTriangleAgainsPlanes(&t, r.parameters.viewFrustumSides)
 
 		for _, t := range triangles {
+
 			for _, vertex := range t {
-				if math.IsNaN(float64(vertex.Position.X)) || math.IsNaN(float64(vertex.Position.Y)) || math.IsNaN(float64(vertex.Position.Z)) {
-					fmt.Println("error after")
+				if vertex.Position.X.IsNaN() || vertex.Position.Y.IsNaN() || vertex.Position.Z.IsNaN() {
+					panic("NaN found in vertex position")
 				}
 			}
 
