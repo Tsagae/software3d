@@ -116,7 +116,7 @@ func projectTriangle(t *graphics.Triangle) {
 }
 
 // Renders a line in clip space
-func drawLine(v0, v1 *basics.Vector3, iBuf *graphics.ImageBuffer, zBuf *graphics.ZBuffer) {
+func drawLine(v0, v1 *basics.Vector3, iBuf *graphics.ImageBuffer) {
 	y0 := v0.Y
 	y1 := v1.Y
 	x0 := v0.X
@@ -166,10 +166,10 @@ func genericDrawLine(a0, a1, b0, m, aMaxCanvas, bMaxCanvas basics.Scalar, setIma
 
 func getViewFrustumSides(aspectRatio basics.Scalar) []basics.Plane {
 	{
-		bottomLeft := basics.Vector3{-aspectRatio, -1, 1}
-		bottomRight := basics.Vector3{+aspectRatio, -1, 1}
-		topLeft := basics.Vector3{-aspectRatio, +1, 1}
-		topRight := basics.Vector3{+aspectRatio, +1, 1}
+		bottomLeft := basics.Vector3{X: -aspectRatio, Y: -1, Z: 1}
+		bottomRight := basics.Vector3{X: +aspectRatio, Y: -1, Z: 1}
+		topLeft := basics.Vector3{X: -aspectRatio, Y: +1, Z: 1}
+		topRight := basics.Vector3{X: +aspectRatio, Y: +1, Z: 1}
 		forward := basics.Forward()
 		return []basics.Plane{
 			basics.NewPlaneFromPoints(&bottomLeft, &basics.Vector3{}, &bottomRight), //bottom

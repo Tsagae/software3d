@@ -38,7 +38,7 @@ func (r *RasterRender) renderSingleItemWireFrame(item renderItem) {
 				p1 := projectPointOnViewPlane(&triangle[(i+1)%3].Position)
 				scalePointOnScreen(&p0.X, &p0.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
 				scalePointOnScreen(&p1.X, &p1.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
-				drawLine(&p0, &p1, &r.imageBuffer, &r.zBuffer)
+				drawLine(&p0, &p1, &r.imageBuffer)
 			}
 		}
 		/*
