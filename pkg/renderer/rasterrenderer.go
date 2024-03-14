@@ -46,22 +46,28 @@ func (r *RasterRender) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphi
 
 func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 	mesh := item.modelObject.Mesh()
-	ignoreMeshNormals := item.modelObject.IgnoreMeshNormals()
 	iterator := mesh.Iterator()
+
+	var nextFunc func() graphics.Triangle
+	if item.modelObject.IgnoreMeshNormals() {
+		nextFunc = func() graphics.Triangle {
+			return iterator.NextWithFaceNormals()
+		}
+	} else {
+		nextFunc = func() graphics.Triangle {
+			return iterator.Next()
+		}
+	}
+
 	for iterator.HasNext() {
 		// Translate triangle in view space
 		var t graphics.Triangle
-		if ignoreMeshNormals {
-			t = iterator.NextWithFaceNormals()
-		} else {
-			t = iterator.Next()
-		}
+		t = nextFunc()
 		t.ThisApplyTransformation(&item.completeTransform)
 
 		triangles := ClipTriangleAgainsPlanes(&t, r.parameters.viewFrustumSides)
 
 		for _, t := range triangles {
-
 			for _, vertex := range t {
 				if vertex.Position.X.IsNaN() || vertex.Position.Y.IsNaN() || vertex.Position.Z.IsNaN() {
 					panic("NaN found in vertex position")
