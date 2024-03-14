@@ -70,13 +70,14 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 		for _, t := range triangles {
 			for _, vertex := range t {
 				if vertex.Position.X.IsNaN() || vertex.Position.Y.IsNaN() || vertex.Position.Z.IsNaN() {
-					panic("NaN found in vertex position")
+					panic("NaN found in vertex position") //assertion
 				}
 			}
 
 			lightTriangle(&t, &item, lights)
 
 			projectTriangle(&t)
+
 			// Back face culling
 			triangleNormal := t.GetSurfaceNormal()
 			forward := basics.Forward()
@@ -88,7 +89,6 @@ func (r *RasterRender) renderSingleItem(item renderItem, lights []renderLight) {
 			scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
 
 			rasterTriangle(t, r.parameters.winWidth, r.parameters.winHeight, &r.imageBuffer, &r.zBuffer)
-
 		}
 	}
 }
@@ -102,8 +102,6 @@ func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffe
 	maxX = basics.Clamp(0, basics.Scalar(winWidth), basics.Ceil(maxX))
 	maxY = basics.Clamp(0, basics.Scalar(winHeight), basics.Ceil(maxY))
 
-	//fmt.Printf("minX: %v minY: %v maxX: %v maxY: %v\n", minX, minY, maxX, maxY)
-
 	// Test for each pixel in the bounding box from top left to bottom right
 	for y := int(minY); y < int(maxY); y++ {
 		for x := int(minX); x < int(maxX); x++ {
@@ -116,7 +114,7 @@ func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffe
 			point := t.InterpolateVertexProps(w0, w1, w2)
 
 			// depth test
-			if zBuffer.Get(x, y) < point.Position.Z { // if the point is behind the camera or the depth buffer has already something closer
+			if zBuffer.Get(x, y) < point.Position.Z { // if the depth buffer has already something closer
 				continue
 			}
 

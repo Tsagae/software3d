@@ -113,7 +113,7 @@ func ClipTriangle(t *graphics.Triangle, p *basics.Plane) []graphics.Triangle {
 		}
 	}
 	if !(len(newVertices) == 3 || len(newVertices) == 4) {
-		panic(fmt.Sprintf("Triangle clipping produced a polygon with %d vertices", len(newVertices)))
+		panic(fmt.Sprintf("Triangle clipping produced a polygon with %d vertices", len(newVertices))) //assertion
 	}
 	foundNan := false
 	if len(newVertices) == 3 {
