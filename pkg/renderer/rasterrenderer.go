@@ -4,6 +4,7 @@ import (
 	"github.com/tsagae/software3d/pkg/basics"
 	"github.com/tsagae/software3d/pkg/entities"
 	"github.com/tsagae/software3d/pkg/graphics"
+	"image/color"
 )
 
 type RasterRenderer struct {
@@ -144,7 +145,7 @@ func (r *RasterRenderer) renderSingleItemWireFrame(item renderItem) {
 			scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
 
 			for i := 0; i < 3; i++ {
-				drawLine(&t[i].Position, &t[(i+1)%3].Position, &r.imageBuffer)
+				drawLine(&t[i].Position, &t[(i+1)%3].Position, color.RGBA{R: 255, G: 255, B: 255}, &r.imageBuffer)
 			}
 
 			r.lastTriCount++
