@@ -7,9 +7,13 @@ import (
 )
 
 type RasterRenderer struct {
-	parameters  Parameters
-	zBuffer     graphics.ZBuffer
-	imageBuffer graphics.ImageBuffer
+	parameters                  Parameters
+	zBuffer                     graphics.ZBuffer
+	imageBuffer                 graphics.ImageBuffer
+	lastTriCount                uint
+	lastTriDiscardedCount       uint
+	lastFragmentsInsideBBCount  uint
+	lastFragmentsOutsideBBCount uint
 }
 
 func NewRasterRenderer(camera *entities.SceneGraphNode, planeZ basics.Scalar, winWidth int, winHeight int) *RasterRenderer {
@@ -38,6 +42,12 @@ func (r *RasterRenderer) SetRenderMode(renderMode uint8) {
 }
 
 func (r *RasterRenderer) RenderSceneGraph(sceneGraph *entities.SceneGraph) *graphics.ImageBuffer {
+	r.lastTriDiscardedCount = 0
+	r.lastFragmentsOutsideBBCount = 0
+	r.lastFragmentsInsideBBCount = 0
+	r.lastTriCount = 0
+	r.zBuffer.Clear()
+
 	inverseCameraT := sceneGraph.GetNode("camera").WorldTransform()
 	inverseCameraT.ThisInvert()
 	itemsToRender, lightsToRender := getAllItemsToRender(sceneGraph, &inverseCameraT)
@@ -52,7 +62,6 @@ func (r *RasterRenderer) RenderSceneGraph(sceneGraph *entities.SceneGraph) *grap
 			panic("invalid Rendermode")
 		}
 	}
-	r.zBuffer.Clear()
 	return &r.imageBuffer
 }
 
@@ -94,13 +103,15 @@ func (r *RasterRenderer) renderSingleItem(item renderItem, lights []renderLight)
 			triangleNormal := t.GetSurfaceNormal()
 			forward := basics.Forward()
 			if forward.Dot(triangleNormal) > 0 {
+				r.lastTriDiscardedCount++
 				continue
 			}
 
 			// Correct scaling for the aspect ratio
 			scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
 
-			rasterTriangle(t, r.parameters.winWidth, r.parameters.winHeight, &r.imageBuffer, &r.zBuffer)
+			r.rasterTriangle(t)
+			r.lastTriCount++
 		}
 	}
 }
@@ -126,18 +137,19 @@ func (r *RasterRenderer) renderSingleItemWireFrame(item renderItem) {
 				scalePointOnScreen(&p1.X, &p1.Y, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
 				drawLine(&p0, &p1, &r.imageBuffer)
 			}
+			r.lastTriCount++
 		}
 	}
 }
 
-func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffer *graphics.ImageBuffer, zBuffer *graphics.ZBuffer) {
+func (r *RasterRenderer) rasterTriangle(t graphics.Triangle) {
 	// Bounding box
 	maxX, minX, maxY, minY := getMaxMin(t[0].Position, t[1].Position, t[2].Position)
-	minX = basics.Clamp(0, basics.Scalar(winWidth), basics.Floor(minX))
-	minY = basics.Clamp(0, basics.Scalar(winHeight), basics.Floor(minY))
+	minX = basics.Clamp(0, basics.Scalar(r.parameters.winWidth), basics.Floor(minX))
+	minY = basics.Clamp(0, basics.Scalar(r.parameters.winHeight), basics.Floor(minY))
 
-	maxX = basics.Clamp(0, basics.Scalar(winWidth), basics.Ceil(maxX))
-	maxY = basics.Clamp(0, basics.Scalar(winHeight), basics.Ceil(maxY))
+	maxX = basics.Clamp(0, basics.Scalar(r.parameters.winWidth), basics.Ceil(maxX))
+	maxY = basics.Clamp(0, basics.Scalar(r.parameters.winHeight), basics.Ceil(maxY))
 
 	// Test for each pixel in the bounding box from top left to bottom right
 	for y := int(minY); y < int(maxY); y++ {
@@ -146,20 +158,38 @@ func rasterTriangle(t graphics.Triangle, winWidth int, winHeight int, imageBuffe
 			// find weights for interpolation
 			w0, w1, w2 := basics.FindWeights2D(&t[0].Position, &t[1].Position, &t[2].Position, &target2D)
 			if w0 < 0 || w1 < 0 || w2 < 0 {
+				r.lastFragmentsOutsideBBCount++
 				continue // point lands outside the triangle
 			}
+			r.lastFragmentsInsideBBCount++
 			point := t.InterpolateVertexProps(w0, w1, w2)
 
 			// depth test
-			if zBuffer.Get(x, y) < point.Position.Z { // if the depth buffer has already something closer
+			if r.zBuffer.Get(x, y) < point.Position.Z { // if the depth buffer has already something closer
 				continue
 			}
 
-			zBuffer.Set(x, y, point.Position.Z)
+			r.zBuffer.Set(x, y, point.Position.Z)
 
 			// Scaling to uint8 range
 			point.Color = point.Color.Mul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
-			imageBuffer.Set(x, y, point.Color.ToColor())
+			r.imageBuffer.Set(x, y, point.Color.ToColor())
 		}
 	}
+}
+
+func (r *RasterRenderer) LastFragmentsInsideBBCount() uint {
+	return r.lastFragmentsInsideBBCount
+}
+
+func (r *RasterRenderer) LastFragmentsOutsideBBCount() uint {
+	return r.lastFragmentsOutsideBBCount
+}
+
+func (r *RasterRenderer) LastTriCount() uint {
+	return r.lastTriCount
+}
+
+func (r *RasterRenderer) LastTriDiscardedCount() uint {
+	return r.lastTriDiscardedCount
 }

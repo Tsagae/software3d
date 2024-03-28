@@ -120,7 +120,7 @@ func run(renderMode uint8, loop func(graph *entities.SceneGraph), sceneGraph *en
 		elapsedSum += elapsed
 
 		if frames%20 == 0 && elapsed.Milliseconds() != 0 {
-			fmt.Printf("avg ms: %v \n", elapsedSum.Milliseconds()/int64(frames))
+			fmt.Printf("avg ms: %v \nTris: %v DiscardedTris: %v FragmentsInsideBBox: %vk FragmentsOutsideBBox: %vk \n", elapsedSum.Milliseconds()/int64(frames), objRenderer.LastTriCount(), objRenderer.LastTriDiscardedCount(), objRenderer.LastFragmentsInsideBBCount()/1000, objRenderer.LastFragmentsOutsideBBCount()/1000)
 			elapsedSum = 0
 			frames = 0
 			//fmt.Println("FPS: ", 1000/elapsed.Milliseconds(), "ms: ", elapsed.Milliseconds())
