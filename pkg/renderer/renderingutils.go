@@ -166,8 +166,10 @@ func drawLineZBuf(v0, v1 *basics.Vector3, color color.RGBA, depth basics.Scalar,
 			return
 		}
 		genericDrawLine(v0.X, v1.X, v0.Y, dy/dx, basics.Scalar(iBuf.Width()), basics.Scalar(iBuf.Height()), func(a int, b int) {
-			iBuf.Set(a, b, color)
-			zBuf.Set(a, b, depth)
+			if zBuf.Get(a, b) > depth {
+				zBuf.Set(a, b, depth)
+				iBuf.Set(a, b, color)
+			}
 		})
 	} else {
 		if v0.Y > v1.Y {
@@ -177,8 +179,10 @@ func drawLineZBuf(v0, v1 *basics.Vector3, color color.RGBA, depth basics.Scalar,
 			return
 		}
 		genericDrawLine(v0.Y, v1.Y, v0.X, dx/dy, basics.Scalar(iBuf.Height()), basics.Scalar(iBuf.Width()), func(a int, b int) {
-			iBuf.Set(b, a, color)
-			zBuf.Set(a, b, depth)
+			if zBuf.Get(b, a) > depth {
+				zBuf.Set(b, a, depth)
+				iBuf.Set(b, a, color)
+			}
 		})
 	}
 }
