@@ -373,9 +373,9 @@ func setupClipping() *entities.SceneGraph {
 	cameraPitch = 72
 	cameraYaw = -26
 
-	planeObj := entities.NewModelObject("planeObj", meshes["quad"], true, specularExp, true)
+	quadObj := entities.NewModelObject("quadObj", meshes["quad"], true, specularExp, true)
 
-	sceneGraph.AddChild("world", entities.NewSceneGraphNode(planeObj, "plane"), basics.NewTransform(10, basics.NewQuaternionFromEulerAngles(0, 90, 0), basics.NewVector3(0, 0, 10)))
+	sceneGraph.AddChild("world", entities.NewSceneGraphNode(quadObj, "plane"), basics.NewTransform(10, basics.NewQuaternionFromEulerAngles(0, 90, 0), basics.NewVector3(0, 0, 10)))
 
 	// Lighting
 	simpleFallOff := func(lightDistance basics.Scalar) basics.Scalar {
