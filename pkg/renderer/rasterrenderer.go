@@ -110,7 +110,7 @@ func (r *RasterRenderer) renderSingleItem(item renderItem, lights []renderLight)
 
 			// Correct scaling for the aspect ratio
 			scaleTriangleOnScreen(&t, r.parameters.hw, r.parameters.hh, r.parameters.aspectRatio)
-
+			//fmt.Println(t[0].Position, t[1].Position, t[2].Position)
 			r.rasterTriangle(t)
 			r.lastTriCount++
 		}
@@ -156,23 +156,54 @@ func (r *RasterRenderer) renderSingleItemWireFrame(item renderItem) {
 func (r *RasterRenderer) rasterTriangle(t graphics.Triangle) {
 	// Bounding box
 	maxX, minX, maxY, minY := getMaxMin(t[0].Position, t[1].Position, t[2].Position)
-	minX = basics.Clamp(0, basics.Scalar(r.parameters.winWidth), basics.Floor(minX))
-	minY = basics.Clamp(0, basics.Scalar(r.parameters.winHeight), basics.Floor(minY))
+	minX = basics.Clamp(0, basics.Scalar(r.parameters.winWidth-1), basics.Floor(minX))
+	minY = basics.Clamp(0, basics.Scalar(r.parameters.winHeight-1), basics.Floor(minY))
 
-	maxX = basics.Clamp(0, basics.Scalar(r.parameters.winWidth), basics.Ceil(maxX))
-	maxY = basics.Clamp(0, basics.Scalar(r.parameters.winHeight), basics.Ceil(maxY))
+	maxX = basics.Clamp(0, basics.Scalar(r.parameters.winWidth-1), basics.Ceil(maxX))
+	maxY = basics.Clamp(0, basics.Scalar(r.parameters.winHeight-1), basics.Ceil(maxY))
 
+	/*
+		botLeft := basics.Vector3{minX, minY, 0}
+		botRight := basics.Vector3{maxX, minY, 0}
+		topLeft := basics.Vector3{minX, maxY, 0}
+		topRight := basics.Vector3{maxX, maxY, 0}
+		drawLineZBuf(&botLeft, &botRight, color.RGBA{255, 255, 255, 0}, 0, &r.imageBuffer, &r.zBuffer)
+		drawLineZBuf(&botLeft, &topLeft, color.RGBA{255, 255, 255, 0}, 0, &r.imageBuffer, &r.zBuffer)
+		drawLineZBuf(&topLeft, &topRight, color.RGBA{255, 255, 255, 0}, 0, &r.imageBuffer, &r.zBuffer)
+		drawLineZBuf(&topRight, &botRight, color.RGBA{255, 255, 255, 0}, 0, &r.imageBuffer, &r.zBuffer)
+	*/
+	direction := 1
+	startX := int(minX)
+	var lastOutsideTri uint
+	var lastInsideTri uint
 	// Test for each pixel in the bounding box from top left to bottom right
-	for y := int(minY); y < int(maxY); y++ {
-		for x := int(minX); x < int(maxX); x++ {
+	for y := int(minY); y <= int(maxY) && y >= 0; y++ {
+		r.lastFragmentsOutsideBBCount += lastOutsideTri
+		r.lastFragmentsInsideBBCount += lastInsideTri
+		lastOutsideTri = 0
+		lastInsideTri = 0
+		foundOneOnX := false
+		for x := startX; x <= int(maxX) && x >= 0; x += direction {
 			target2D := basics.NewVector3(basics.Scalar(x), basics.Scalar(y), 0)
 			// find weights for interpolation
 			w0, w1, w2 := basics.FindWeights2D(&t[0].Position, &t[1].Position, &t[2].Position, &target2D)
 			if w0 < 0 || w1 < 0 || w2 < 0 {
-				r.lastFragmentsOutsideBBCount++
+				lastOutsideTri++
+				if foundOneOnX {
+					if lastOutsideTri > lastInsideTri {
+						direction *= -1
+						if direction == -1 {
+							startX = int(maxX) - 1
+						} else {
+							startX = int(minX)
+						}
+					}
+					break
+				}
 				continue // point lands outside the triangle
 			}
-			r.lastFragmentsInsideBBCount++
+			foundOneOnX = true
+			lastInsideTri++
 			point := t.InterpolateVertexProps(w0, w1, w2)
 
 			// depth test
