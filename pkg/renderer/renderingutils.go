@@ -148,6 +148,41 @@ func drawLine(v0, v1 *basics.Vector3, color color.RGBA, iBuf *graphics.ImageBuff
 	}
 }
 
+// Renders a line in clip space and sets a depth on the zBuffer
+func drawLineZBuf(v0, v1 *basics.Vector3, color color.RGBA, depth basics.Scalar, iBuf *graphics.ImageBuffer, zBuf *graphics.ZBuffer) {
+	y0 := v0.Y
+	y1 := v1.Y
+	x0 := v0.X
+	x1 := v1.X
+
+	dx := x1 - x0
+	dy := y1 - y0
+
+	if basics.Abs(dx) > basics.Abs(dy) {
+		if v0.X > v1.X {
+			v0, v1 = v1, v0
+		}
+		if dx == 0 {
+			return
+		}
+		genericDrawLine(v0.X, v1.X, v0.Y, dy/dx, basics.Scalar(iBuf.Width()), basics.Scalar(iBuf.Height()), func(a int, b int) {
+			iBuf.Set(a, b, color)
+			zBuf.Set(a, b, depth)
+		})
+	} else {
+		if v0.Y > v1.Y {
+			v0, v1 = v1, v0
+		}
+		if dy == 0 {
+			return
+		}
+		genericDrawLine(v0.Y, v1.Y, v0.X, dx/dy, basics.Scalar(iBuf.Height()), basics.Scalar(iBuf.Width()), func(a int, b int) {
+			iBuf.Set(b, a, color)
+			zBuf.Set(a, b, depth)
+		})
+	}
+}
+
 // a0, a1: start and end points on the same axis
 // b0: start on the other axis
 // m: slope
