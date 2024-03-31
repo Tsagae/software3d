@@ -204,18 +204,20 @@ func (r *RasterRenderer) rasterTriangle(t graphics.Triangle) {
 			}
 			foundOneOnX = true
 			lastInsideTri++
-			point := t.InterpolateVertexProps(w0, w1, w2)
+			fragmentPosition := t.InterpolatePosition(w0, w1, w2)
 
 			// depth test
-			if r.zBuffer.Get(x, y) < point.Position.Z { // if the depth buffer has already something closer
+			if r.zBuffer.Get(x, y) < fragmentPosition.Z { // if the depth buffer has already something closer
 				continue
 			}
 
-			r.zBuffer.Set(x, y, point.Position.Z)
+			colorVector := t.InterpolateColor(w0, w1, w2)
+
+			r.zBuffer.Set(x, y, fragmentPosition.Z)
 
 			// Scaling to uint8 range
-			point.Color = point.Color.Mul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
-			r.imageBuffer.Set(x, y, point.Color.ToColor())
+			colorVector = colorVector.Mul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
+			r.imageBuffer.Set(x, y, colorVector.ToColor())
 		}
 	}
 }
