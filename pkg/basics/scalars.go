@@ -2,7 +2,7 @@ package basics
 
 import "math"
 
-type Scalar float64
+type Scalar float32
 
 const epsilon Scalar = 1e-5
 
