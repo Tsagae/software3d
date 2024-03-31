@@ -176,6 +176,7 @@ func (r *RasterRenderer) rasterTriangle(t graphics.Triangle) {
 	startX := int(minX)
 	var lastOutsideTri uint
 	var lastInsideTri uint
+	var cachedWeightsTri graphics.CachedWeightsTri = graphics.NewCachedWeightsTri(&t)
 	// Test for each pixel in the bounding box from top left to bottom right
 	for y := int(minY); y <= int(maxY) && y >= 0; y++ {
 		r.lastFragmentsOutsideBBCount += lastOutsideTri
@@ -186,7 +187,7 @@ func (r *RasterRenderer) rasterTriangle(t graphics.Triangle) {
 		for x := startX; x <= int(maxX) && x >= 0; x += direction {
 			target2D := basics.NewVector3(basics.Scalar(x), basics.Scalar(y), 0)
 			// find weights for interpolation
-			w0, w1, w2 := basics.FindWeights2D(&t[0].Position, &t[1].Position, &t[2].Position, &target2D)
+			w0, w1, w2 := cachedWeightsTri.FindWeights2D(&target2D)
 			if w0 < 0 || w1 < 0 || w2 < 0 {
 				lastOutsideTri++
 				if foundOneOnX {
