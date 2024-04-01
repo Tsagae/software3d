@@ -238,3 +238,7 @@ func (r *RasterRenderer) LastTriCount() uint {
 func (r *RasterRenderer) LastTriDiscardedCount() uint {
 	return r.lastTriDiscardedCount
 }
+
+func (r *RasterRenderer) ImageBuffer() *graphics.ImageBuffer {
+	return &r.imageBuffer
+}
