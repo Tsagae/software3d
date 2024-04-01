@@ -162,6 +162,7 @@ func (r *RasterRenderer) rasterTriangle(t graphics.Triangle) {
 	maxX = basics.Clamp(0, basics.Scalar(r.parameters.winWidth-1), basics.Ceil(maxX))
 	maxY = basics.Clamp(0, basics.Scalar(r.parameters.winHeight-1), basics.Ceil(maxY))
 
+	//Draw BB
 	/*
 		botLeft := basics.Vector3{minX, minY, 0}
 		botRight := basics.Vector3{maxX, minY, 0}
@@ -177,13 +178,24 @@ func (r *RasterRenderer) rasterTriangle(t graphics.Triangle) {
 	var lastOutsideTri uint
 	var lastInsideTri uint
 	var cachedWeightsTri graphics.CachedWeightsTri = graphics.NewCachedWeightsTri(&t)
-	// Test for each pixel in the bounding box from top left to bottom right
+	// Test for each pixel in the bounding box
+	firstValidX := 0
+	lastValidX := 0
 	for y := int(minY); y <= int(maxY) && y >= 0; y++ {
 		r.lastFragmentsOutsideBBCount += lastOutsideTri
 		r.lastFragmentsInsideBBCount += lastInsideTri
 		lastOutsideTri = 0
 		lastInsideTri = 0
 		foundOneOnX := false
+
+		if firstValidX-int(minX) < int(maxX)-lastValidX {
+			startX = int(minX)
+			direction = 1
+		} else {
+			startX = int(maxX)
+			direction = -1
+		}
+
 		for x := startX; x <= int(maxX) && x >= 0; x += direction {
 			target2D := basics.NewVector3(basics.Scalar(x), basics.Scalar(y), 0)
 			// find weights for interpolation
@@ -191,22 +203,17 @@ func (r *RasterRenderer) rasterTriangle(t graphics.Triangle) {
 			if w0 < 0 || w1 < 0 || w2 < 0 {
 				lastOutsideTri++
 				if foundOneOnX {
-					if lastOutsideTri > lastInsideTri {
-						direction *= -1
-						if direction == -1 {
-							startX = int(maxX) - 1
-						} else {
-							startX = int(minX)
-						}
-					}
+					lastValidX = x - 1
 					break
 				}
 				continue // point lands outside the triangle
 			}
+			if !foundOneOnX {
+				firstValidX = x
+			}
 			foundOneOnX = true
 			lastInsideTri++
 			fragmentPosition := t.InterpolatePosition(w0, w1, w2)
-
 			// depth test
 			if r.zBuffer.Get(x, y) < fragmentPosition.Z { // if the depth buffer has already something closer
 				continue
@@ -219,7 +226,10 @@ func (r *RasterRenderer) rasterTriangle(t graphics.Triangle) {
 			// Scaling to uint8 range
 			colorVector = colorVector.Mul(255.0 / 65535.0) // was: colorVector.ThisMul(1 / 65535.0); colorVector.ThisMul(255.0)
 			r.imageBuffer.Set(x, y, colorVector.ToColor())
+			//time.Sleep(time.Millisecond)
 		}
+		//fmt.Printf("LastOutside: %v LastInside: %v NextDirection:%v firstValidX-int(minX):%v int(maxX)-lastValidX:%v\n", lastOutsideTri, lastInsideTri, direction, firstValidX-int(minX), int(maxX)-lastValidX)
+
 	}
 }
 
