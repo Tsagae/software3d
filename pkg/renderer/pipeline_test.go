@@ -22,8 +22,11 @@ func BenchmarkSampleScene(b *testing.B) {
 	fmt.Printf("Scene graph: %v\n", time2.Now().Sub(time))
 
 	time = time2.Now()
-	objRenderer.imageBuffer.Clear()
-	fmt.Printf("clearing image buffer: %v\n", time2.Now().Sub(time))
+	for i := 0; i < b.N; i++ {
+		objRenderer.RenderSceneGraph(sceneGraph)
+		objRenderer.imageBuffer.Clear()
+	}
+	fmt.Printf("rendering sample scene avg ms:%.04f (rendered %v times)\n", (float64(time2.Now().Sub(time).Microseconds())/1000)/float64(b.N), b.N)
 	fmt.Println("----------------Benchmark end----------------")
 }
 

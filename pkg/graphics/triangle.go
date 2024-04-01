@@ -6,6 +6,16 @@ import (
 
 type Triangle [3]Vertex
 
+type CachedWeightsTri struct {
+	a   basics.Scalar
+	b   basics.Scalar
+	c   basics.Scalar
+	d   basics.Scalar
+	den basics.Scalar
+	v3x basics.Scalar
+	v3y basics.Scalar
+}
+
 /* Constructors */
 
 // NewTriangle Orientation of vertices is clockwise
@@ -77,4 +87,30 @@ func (t *Triangle) InterpolateVertexProps(w1, w2, w3 basics.Scalar) Vertex {
 func (t *Triangle) FindWeightsPosition(target *basics.Vector3) (basics.Scalar, basics.Scalar, basics.Scalar) {
 	// most of this can be cached when finding weights inside the same triangle TODO
 	return basics.FindWeights3(&t[0].Position, &t[1].Position, &t[2].Position, target)
+}
+
+func NewCachedWeightsTri(t *Triangle) CachedWeightsTri {
+	a := t[1].Position.Y - t[2].Position.Y
+	b := t[0].Position.X - t[2].Position.X
+	c := t[2].Position.X - t[1].Position.X
+	d := t[0].Position.Y - t[2].Position.Y
+	return CachedWeightsTri{
+		a:   a,
+		b:   b,
+		c:   c,
+		d:   d,
+		den: a*b + c*d,
+		v3x: t[2].Position.X,
+		v3y: t[2].Position.Y,
+	}
+}
+
+func (t *CachedWeightsTri) FindWeights2D(target *basics.Vector3) (basics.Scalar, basics.Scalar, basics.Scalar) {
+	t1 := target.X - t.v3x
+	t2 := target.Y - t.v3y
+
+	w1 := (t.a*t1 + t.c*t2) / t.den
+	w2 := (-t.d*t1 + t.b*t2) / t.den
+	w3 := 1 - w1 - w2
+	return w1, w2, w3
 }

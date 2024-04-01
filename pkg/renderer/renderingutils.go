@@ -116,7 +116,7 @@ func projectTriangle(t *graphics.Triangle) {
 }
 
 // Renders a line in clip space
-func drawLine(v0, v1 *basics.Vector3, iBuf *graphics.ImageBuffer) {
+func drawLine(v0, v1 *basics.Vector3, color color.RGBA, iBuf *graphics.ImageBuffer) {
 	y0 := v0.Y
 	y1 := v1.Y
 	x0 := v0.X
@@ -132,8 +132,8 @@ func drawLine(v0, v1 *basics.Vector3, iBuf *graphics.ImageBuffer) {
 		if dx == 0 {
 			return
 		}
-		genericDrawLine(v0.X, v1.X, v0.Y, dy/dx, basics.Scalar(iBuf.Width()), basics.Scalar(iBuf.Height()), func(a int, b int, c color.RGBA) {
-			iBuf.Set(a, b, c)
+		genericDrawLine(v0.X, v1.X, v0.Y, dy/dx, basics.Scalar(iBuf.Width()), basics.Scalar(iBuf.Height()), func(a int, b int) {
+			iBuf.Set(a, b, color)
 		})
 	} else {
 		if v0.Y > v1.Y {
@@ -142,8 +142,47 @@ func drawLine(v0, v1 *basics.Vector3, iBuf *graphics.ImageBuffer) {
 		if dy == 0 {
 			return
 		}
-		genericDrawLine(v0.Y, v1.Y, v0.X, dx/dy, basics.Scalar(iBuf.Height()), basics.Scalar(iBuf.Width()), func(a int, b int, c color.RGBA) {
-			iBuf.Set(b, a, c)
+		genericDrawLine(v0.Y, v1.Y, v0.X, dx/dy, basics.Scalar(iBuf.Height()), basics.Scalar(iBuf.Width()), func(a int, b int) {
+			iBuf.Set(b, a, color)
+		})
+	}
+}
+
+// Renders a line in clip space and sets a depth on the zBuffer
+func drawLineZBuf(v0, v1 *basics.Vector3, color color.RGBA, depth basics.Scalar, iBuf *graphics.ImageBuffer, zBuf *graphics.ZBuffer) {
+	y0 := v0.Y
+	y1 := v1.Y
+	x0 := v0.X
+	x1 := v1.X
+
+	dx := x1 - x0
+	dy := y1 - y0
+
+	if basics.Abs(dx) > basics.Abs(dy) {
+		if v0.X > v1.X {
+			v0, v1 = v1, v0
+		}
+		if dx == 0 {
+			return
+		}
+		genericDrawLine(v0.X, v1.X, v0.Y, dy/dx, basics.Scalar(iBuf.Width()), basics.Scalar(iBuf.Height()), func(a int, b int) {
+			if zBuf.Get(a, b) > depth {
+				zBuf.Set(a, b, depth)
+				iBuf.Set(a, b, color)
+			}
+		})
+	} else {
+		if v0.Y > v1.Y {
+			v0, v1 = v1, v0
+		}
+		if dy == 0 {
+			return
+		}
+		genericDrawLine(v0.Y, v1.Y, v0.X, dx/dy, basics.Scalar(iBuf.Height()), basics.Scalar(iBuf.Width()), func(a int, b int) {
+			if zBuf.Get(b, a) > depth {
+				zBuf.Set(b, a, depth)
+				iBuf.Set(b, a, color)
+			}
 		})
 	}
 }
@@ -153,13 +192,13 @@ func drawLine(v0, v1 *basics.Vector3, iBuf *graphics.ImageBuffer) {
 // m: slope
 // aMaxCanvas, bMaxCanvas first value outside of canvas for the two axis
 // requires a0 <= a1
-func genericDrawLine(a0, a1, b0, m, aMaxCanvas, bMaxCanvas basics.Scalar, setImage func(int, int, color.RGBA)) {
+func genericDrawLine(a0, a1, b0, m, aMaxCanvas, bMaxCanvas basics.Scalar, setImage func(int, int)) {
 	b := b0
 	for a := a0; a <= a1; a++ {
 		if a < 0 || b < 0 || a >= aMaxCanvas || b >= bMaxCanvas {
 			continue
 		}
-		setImage(int(a), int(b), color.RGBA{R: 255, G: 255, B: 255})
+		setImage(int(a), int(b))
 		b += m
 	}
 }

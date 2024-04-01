@@ -369,14 +369,13 @@ func setupClipping() *entities.SceneGraph {
 	cameraObj := entities.NewCameraObject(
 		"mainCamera",
 	)
-	rotateCameraT := basics.NewTransform(1, basics.NewQuaternionFromEulerAngles(-20, -30, 0), basics.Vector3{})
-	sceneGraph.AddChild("world", entities.NewSceneGraphNode(cameraObj, "camera"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(-1.5, 3, -3)))
-	cameraNode := sceneGraph.GetNode("camera")
-	cameraNode.CumulateWorldTransform(&rotateCameraT)
+	sceneGraph.AddChild("world", entities.NewSceneGraphNode(cameraObj, "camera"), basics.NewTransform(1, basics.NewIdentityQuaternion(), basics.NewVector3(0, 2, -0.5)))
+	cameraPitch = 72
+	cameraYaw = -26
 
-	planeObj := entities.NewModelObject("planeObj", meshes["quad"], true, specularExp, true)
+	quadObj := entities.NewModelObject("quadObj", meshes["quad"], true, specularExp, true)
 
-	sceneGraph.AddChild("world", entities.NewSceneGraphNode(planeObj, "plane"), basics.NewTransform(10, basics.NewQuaternionFromEulerAngles(0, 90, 0), basics.NewVector3(0, 0, 10)))
+	sceneGraph.AddChild("world", entities.NewSceneGraphNode(quadObj, "plane"), basics.NewTransform(10, basics.NewQuaternionFromEulerAngles(0, 90, 0), basics.NewVector3(0, 0, 10)))
 
 	// Lighting
 	simpleFallOff := func(lightDistance basics.Scalar) basics.Scalar {
