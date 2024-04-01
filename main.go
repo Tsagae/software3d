@@ -213,11 +213,8 @@ func runRenderOnDifferentThread(renderMode uint8, loop func(graph *entities.Scen
 	if camera == nil {
 		panic("camera not found in scene graph")
 	}
-	startRendering := make(chan bool, 1)
-	doneRendering := make(chan bool, 1)
 	go func() {
 		for {
-			<-startRendering
 			imageBuffer.Clear()
 			loop(sceneGraph)
 			elapsedSum += elapsed
@@ -232,17 +229,14 @@ func runRenderOnDifferentThread(renderMode uint8, loop func(graph *entities.Scen
 			elapsed = time.Since(startTime)
 			startTime = time.Now()
 			inputHandler(window, camera, objRenderer)
-			doneRendering <- true
 		}
 	}()
-	startRendering <- true
 	for !window.ShouldClose() {
 
 		var w, h = window.GetSize()
 
 		// -------------------------
 		// MODIFY OR LOAD IMAGE HERE
-		<-doneRendering
 		img := imageBuffer.GetImage()
 		/*
 			// RESIZING
@@ -258,7 +252,6 @@ func runRenderOnDifferentThread(renderMode uint8, loop func(graph *entities.Scen
 		*/
 		// -------------------------
 		oGLUpdateFrame(window, texture, w, h, img)
-		startRendering <- true
 	}
 	return 0
 }
