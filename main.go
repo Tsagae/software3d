@@ -43,9 +43,11 @@ func main() {
 			http.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 			http.HandleFunc("/debug/pprof/trace", pprof.Trace)
 		}()*/
-	run(renderer.RendermodeNormal, mainLoop, setup())
-	//run(renderer.RendermodeWireframe, func(graph *entities.SceneGraph) {}, setupOnlyCube())
-	//run(renderer.RendermodeWireframe, func(graph *entities.SceneGraph) {}, setupClipping())
+	if len(os.Args) >= 2 && os.Args[1] == "1" {
+		runRenderOnDifferentThread(renderer.RendermodeNormal, mainLoop, setup())
+	} else {
+		run(renderer.RendermodeNormal, mainLoop, setup())
+	}
 }
 
 func oGLUpdateFrame(window *glfw.Window, texture uint32, w int, h int, img []graphics.RGB) {
@@ -120,7 +122,7 @@ func run(renderMode uint8, loop func(graph *entities.SceneGraph), sceneGraph *en
 		elapsedSum += elapsed
 
 		if frames%20 == 0 && elapsed.Milliseconds() != 0 {
-			fmt.Printf("avg ms: %v \nTris: %v DiscardedTris: %v FragmentsInsideBBox: %vk FragmentsOutsideBBox: %vk \n", elapsedSum.Milliseconds()/int64(frames), objRenderer.LastTriCount(), objRenderer.LastTriDiscardedCount(), objRenderer.LastFragmentsInsideBBCount()/1000, objRenderer.LastFragmentsOutsideBBCount()/1000)
+			fmt.Printf("avg ms: %.02f \nTris: %v DiscardedTris: %v FragmentsInsideBBox: %vk FragmentsOutsideBBox: %vk \n", float32(elapsedSum.Milliseconds())/float32(frames), objRenderer.LastTriCount(), objRenderer.LastTriDiscardedCount(), objRenderer.LastFragmentsInsideBBCount()/1000, objRenderer.LastFragmentsOutsideBBCount()/1000)
 			elapsedSum = 0
 			frames = 0
 			//fmt.Println("FPS: ", 1000/elapsed.Milliseconds(), "ms: ", elapsed.Milliseconds())
@@ -153,6 +155,110 @@ func run(renderMode uint8, loop func(graph *entities.SceneGraph), sceneGraph *en
 		inputHandler(window, camera, objRenderer)
 
 		imageBuffer.Clear()
+	}
+	return 0
+}
+
+func runRenderOnDifferentThread(renderMode uint8, loop func(graph *entities.SceneGraph), sceneGraph *entities.SceneGraph) int {
+	err := glfw.Init()
+	if err != nil {
+		panic(err)
+	}
+	defer glfw.Terminate()
+
+	window, err := glfw.CreateWindow(winWidth, winHeight, windowTitle, nil, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	window.MakeContextCurrent()
+
+	err = gl.Init()
+	if err != nil {
+		panic(err)
+	}
+
+	var texture uint32
+	{
+		gl.GenTextures(1, &texture)
+
+		gl.BindTexture(gl.TEXTURE_2D, texture)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+
+		gl.BindImageTexture(0, texture, 0, false, 0, gl.WRITE_ONLY, gl.RGBA8)
+	}
+
+	var framebuffer uint32
+	{
+		gl.GenFramebuffers(1, &framebuffer)
+		gl.BindFramebuffer(gl.FRAMEBUFFER, framebuffer)
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
+
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, framebuffer)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
+	}
+
+	var objRenderer = renderer.NewRasterRenderer(sceneGraph.GetNode("camera"), 1, winWidth, winHeight)
+	objRenderer.SetRenderMode(renderMode)
+
+	var imageBuffer = objRenderer.ImageBuffer()
+	var frames int = 1
+	var startTime time.Time = time.Now()
+	var elapsed time.Duration
+	var elapsedSum time.Duration
+	camera := sceneGraph.GetNode("camera")
+	if camera == nil {
+		panic("camera not found in scene graph")
+	}
+	startRendering := make(chan bool, 1)
+	doneRendering := make(chan bool, 1)
+	go func() {
+		for {
+			<-startRendering
+			imageBuffer.Clear()
+			loop(sceneGraph)
+			elapsedSum += elapsed
+			objRenderer.RenderSceneGraph(sceneGraph)
+			if frames%20 == 0 && elapsed.Milliseconds() != 0 {
+				fmt.Printf("avg ms: %.2f \nTris: %v DiscardedTris: %v FragmentsInsideBBox: %vk FragmentsOutsideBBox: %vk \n", float32(elapsedSum.Milliseconds())/float32(frames), objRenderer.LastTriCount(), objRenderer.LastTriDiscardedCount(), objRenderer.LastFragmentsInsideBBCount()/1000, objRenderer.LastFragmentsOutsideBBCount()/1000)
+				elapsedSum = 0
+				frames = 0
+				//fmt.Println("FPS: ", 1000/elapsed.Milliseconds(), "ms: ", elapsed.Milliseconds())
+			}
+			frames++
+			elapsed = time.Since(startTime)
+			startTime = time.Now()
+			inputHandler(window, camera, objRenderer)
+			doneRendering <- true
+		}
+	}()
+	startRendering <- true
+	for !window.ShouldClose() {
+
+		var w, h = window.GetSize()
+
+		// -------------------------
+		// MODIFY OR LOAD IMAGE HERE
+		<-doneRendering
+		img := imageBuffer.GetImage()
+		/*
+			// RESIZING
+			// Set the expected size that you want:
+			//dst := image.NewRGBA(image.Rect(0, 0, w, h))
+
+			// Resize:
+			im := resize.Resize(uint(w), uint(h), image.Image(img), resize.NearestNeighbor)
+			if tmp, ok := im.(*image.RGBA); ok {
+				img = tmp
+			}
+			//draw.NearestNeighbor.Scale(dst, dst.Rect, img, img.Bounds(), draw.Over, nil)
+		*/
+		// -------------------------
+		oGLUpdateFrame(window, texture, w, h, img)
+		startRendering <- true
 	}
 	return 0
 }
