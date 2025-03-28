@@ -3,6 +3,7 @@
 3D Software renderer written in Golang (opengl is only used to display the output and capture input)
 
 ![screenshot.png](screenshot.png)
+![out](https://github.com/user-attachments/assets/333045e8-5b4e-4fd4-be5a-77803524a7e4)
 
 ## Resources and interesting stuff
 
